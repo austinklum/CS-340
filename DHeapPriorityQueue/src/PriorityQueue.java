@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.AbstractQueue;
 
@@ -5,16 +7,34 @@ public class PriorityQueue {
 	//implements a d-heap based priority queue
 	//the priority is an int (low value is high priority)
 	//associated with each priority is an object
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException {
 		//TODO: Testing
-		int size = 7;
-		int ord = 3;
+		int size;
+		int ord;
+		/* size = 7;
+	 		ord = 3;
 		PriorityQueue myQ = new PriorityQueue(ord, size);
 		for(int i = 7; i >= 1; i--) {
 			myQ.insert(i, "Data" + i);
 		}
 		System.out.println(myQ);
+		myQ.remove();
+		System.out.println(myQ);*/
+		Scanner scan = new Scanner(System.in);
+		//Scanner scan = new Scanner(new File("30Desc.txt"));
+		System.out.println("Enter size then number of children");
+		size = scan.nextInt();
+		ord = scan.nextInt();
+		PriorityQueue myQ = new PriorityQueue(ord, size);
+		System.out.println("Enter # of values to add");
+		int iter = scan.nextInt();
+		System.out.println("Enter input now...");
+		for(int i = 0; i < iter; i++) {
+			myQ.insert(scan.nextInt(), "Data " + i);
+		}
+		myQ.toArrayString();
 	}
+	
 	private class Item{
 		private int priority;
 		private Object data;
@@ -49,7 +69,23 @@ public class PriorityQueue {
 	public void remove() {
 		//PRE !empty()
 		//Remove the item with the highest priority in the queue
-		//TODO Implement me!
+		Item temp = queue[size - 1];
+		size--;
+		int child = 0;
+		while((order * child) + 1 < size) {
+			child = findMinChild(child);
+			if(temp.priority > queue[child].priority) {
+				queue[(child - 1)/order] = queue[child];
+			}
+			else{
+				break;
+			}
+			//Shift child up to parent
+			
+			//move child index ahead
+			//child = (order * child) + 1;
+		}
+		queue[(child - 1)/order] = temp;
 	}
 	
 	public int getSize() {
@@ -82,20 +118,41 @@ public class PriorityQueue {
 	/**
 	 * Finds the smallest child from a parent
 	*/
-	private int findMinChild() {
-		int minChild = 0;
+	private int findMinChild(int i) {
+		//Look at the first element
+		int minChild = (order * i) + 1;
+		int childToCheck = (order * i) + 1;
+		
+		//Loop through all possibilities and check if there are children with lesser value.
+		int k = 2;
+		while(k <= order && childToCheck < size) {
+			if(queue[childToCheck].priority < queue[minChild].priority) {
+				minChild = childToCheck;
+			}
+			//Increment k and the child position.
+			childToCheck = (order * i) + (k++);
+		}
+		System.out.println("Smallest Child at " + i + " is " + minChild);
 		return minChild;
 	}
 	@Override
 	public String toString() {
 		String textBuilder = "";
-		int i = 0;
-		for(Item node : queue) {
-			textBuilder +=  "Array Pos: " + i + " | P: " + node.priority + " | D: " + node.data + "\n";
-			i++;
+		for(int i = 0; i < size; i++) {
+			textBuilder +=  "Array Pos: " + i + " | P: " + queue[i].priority + " | D: " + queue[i].data + "\n";
 		}
 		return textBuilder;
 		
+	}
+	
+	private void toArrayString() {
+		for(int i = 0; i < size; i++) {
+			System.out.printf("%2d | ", queue[i].priority);
+		}
+		System.out.println();
+		for(int i = 0; i < size; i++) {
+			System.out.printf("%2d | ", i);
+		}
 	}
 }
 
