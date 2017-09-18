@@ -1,7 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
-import java.util.AbstractQueue;
 
 public class PriorityQueue {
 	//implements a d-heap based priority queue
@@ -20,8 +19,8 @@ public class PriorityQueue {
 		System.out.println(myQ);
 		myQ.remove();
 		System.out.println(myQ);*/
-		Scanner scan = new Scanner(System.in);
-		//Scanner scan = new Scanner(new File("30Desc.txt"));
+		//Scanner scan = new Scanner(System.in);
+		Scanner scan = new Scanner(new File("7Desc.txt"));
 		System.out.println("Enter size then number of children");
 		size = scan.nextInt();
 		ord = scan.nextInt();
@@ -32,6 +31,9 @@ public class PriorityQueue {
 		for(int i = 0; i < iter; i++) {
 			myQ.insert(scan.nextInt(), "Data " + i);
 		}
+		myQ.toArrayString();
+		myQ.remove();
+		System.out.println();
 		myQ.toArrayString();
 	}
 	
@@ -124,15 +126,17 @@ public class PriorityQueue {
 		int childToCheck = (order * i) + 1;
 		
 		//Loop through all possibilities and check if there are children with lesser value.
-		int k = 2;
+		int k = 1;
 		while(k <= order && childToCheck < size) {
 			if(queue[childToCheck].priority < queue[minChild].priority) {
 				minChild = childToCheck;
 			}
+			System.out.println(childToCheck);
 			//Increment k and the child position.
-			childToCheck = (order * i) + (k++);
+			k++;
+			childToCheck = (order * i) + (k);
 		}
-		System.out.println("Smallest Child at " + i + " is " + minChild);
+		System.out.println("\nSmallest Child at " + i + " is " + queue[minChild].priority);
 		return minChild;
 	}
 	@Override
