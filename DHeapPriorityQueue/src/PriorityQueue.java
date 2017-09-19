@@ -32,7 +32,14 @@ public class PriorityQueue {
 			myQ.insert(scan.nextInt(), "Data " + i);
 		}
 		myQ.toArrayString();
-		myQ.remove();
+		//myQ.remove();
+		System.out.println();
+		int sizeStatic = size;
+		for(int i = 0; i < sizeStatic; i++) {
+			System.out.println(myQ.getPriority());
+			myQ.remove();
+		}
+		
 		System.out.println();
 		myQ.toArrayString();
 	}
@@ -74,7 +81,7 @@ public class PriorityQueue {
 		Item temp = queue[size - 1];
 		size--;
 		int child = 0;
-		while((order * child) + 1 < size) {
+		while(child <= size) {
 			child = findMinChild(child);
 			if(temp.priority > queue[child].priority) {
 				queue[(child - 1)/order] = queue[child];
@@ -131,12 +138,11 @@ public class PriorityQueue {
 			if(queue[childToCheck].priority < queue[minChild].priority) {
 				minChild = childToCheck;
 			}
-			System.out.println(childToCheck);
 			//Increment k and the child position.
 			k++;
 			childToCheck = (order * i) + (k);
 		}
-		System.out.println("\nSmallest Child at " + i + " is " + queue[minChild].priority);
+		//System.out.println("\nSmallest Child at " + i + " is " + queue[minChild].priority);
 		return minChild;
 	}
 	@Override
