@@ -7,20 +7,20 @@ public class PriorityQueue {
 	//the priority is an int (low value is high priority)
 	//associated with each priority is an object
 	public static void main(String[] args) throws FileNotFoundException {
-		//TODO: Testing
+		/*
 		int size;
 		int ord;
-		/* size = 7;
-	 		ord = 3;
-		PriorityQueue myQ = new PriorityQueue(ord, size);
-		for(int i = 7; i >= 1; i--) {
-			myQ.insert(i, "Data" + i);
+		 size = 20;
+		 ord = 1;
+		PriorityQueue qq = new PriorityQueue(ord, size);
+		for(int i = 20; i >= 1; i--) {
+			qq.insert(i, "Data" + i);
 		}
-		System.out.println(myQ);
-		myQ.remove();
-		System.out.println(myQ);*/
+		System.out.println(qq);
+		qq.remove();
+		System.out.println(qq);
 		//Scanner scan = new Scanner(System.in);
-		Scanner scan = new Scanner(new File("7Desc.txt"));
+		Scanner scan = new Scanner(new File("30Desc.txt"));
 		System.out.println("Enter size then number of children");
 		size = scan.nextInt();
 		ord = scan.nextInt();
@@ -34,14 +34,13 @@ public class PriorityQueue {
 		myQ.toArrayString();
 		//myQ.remove();
 		System.out.println();
-		int sizeStatic = size;
-		for(int i = 0; i < sizeStatic; i++) {
+		for(int i = 0; i < size; i++) {
 			System.out.println(myQ.getPriority());
 			myQ.remove();
 		}
 		
 		System.out.println();
-		myQ.toArrayString();
+		myQ.toArrayString();*/
 	}
 	
 	private class Item{
@@ -80,20 +79,24 @@ public class PriorityQueue {
 		//Remove the item with the highest priority in the queue
 		Item temp = queue[size - 1];
 		size--;
+		//Start at root
 		int child = 0;
+		
+		//While not at the end of the tree
 		while(child <= size) {
+			
+			//Find the smallest child given a parent
 			child = findMinChild(child);
+			
+			//Shift child up if less than temp
 			if(temp.priority > queue[child].priority) {
 				queue[(child - 1)/order] = queue[child];
 			}
 			else{
 				break;
 			}
-			//Shift child up to parent
-			
-			//move child index ahead
-			//child = (order * child) + 1;
 		}
+		//We found where to place our new data
 		queue[(child - 1)/order] = temp;
 	}
 	
@@ -112,16 +115,24 @@ public class PriorityQueue {
 	public void insert(int p, Object d) {
 		//PRE: !full()
 		//Insert a new item into queue with priority p and associated data d
-		int child;
-		size++;
-		child = size - 1;
-		queue[child] = new Item(p,d); 
 		
+		//Start at the last leaf in the tree
+		int child = size;
+		size++;
+		
+		queue[child] = new Item(p,d); 
 		Item temp = queue[child];    
+		
+		//While not the root and priority is less than the parent
         while (child > 0 && temp.priority < queue[(child - 1)/order].priority){
-            queue[child] = queue[(child - 1)/order];
+            
+        	//Shift parent into child
+        	queue[child] = queue[(child - 1)/order];
+        	
+        	//Child becomes the parent
             child = (child - 1)/order;
-        }                   
+        }
+        //We found where to place our new node.
         queue[child] = temp;
 	}
 	/**
@@ -142,9 +153,9 @@ public class PriorityQueue {
 			k++;
 			childToCheck = (order * i) + (k);
 		}
-		//System.out.println("\nSmallest Child at " + i + " is " + queue[minChild].priority);
 		return minChild;
 	}
+	/** Prints out the heap as a list */
 	@Override
 	public String toString() {
 		String textBuilder = "";
@@ -154,14 +165,14 @@ public class PriorityQueue {
 		return textBuilder;
 		
 	}
-	
+	/**Prints out the heap as an array with indices on the top row and priorities on bottom row */
 	private void toArrayString() {
 		for(int i = 0; i < size; i++) {
-			System.out.printf("%2d | ", queue[i].priority);
+			System.out.printf("%2d | ", i);
 		}
 		System.out.println();
 		for(int i = 0; i < size; i++) {
-			System.out.printf("%2d | ", i);
+			System.out.printf("%2d | ", queue[i].priority);
 		}
 	}
 }
