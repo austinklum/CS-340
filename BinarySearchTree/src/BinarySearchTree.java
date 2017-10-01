@@ -5,52 +5,59 @@ public class BinarySearchTree {
 /* 
 Implements a binary search tree of ints stored in a random access file. 
 Duplicates are recorded by a count field associated with the int
-*/ 
+*/
+    public static void main(String[] args) throws IOException {
+        BinarySearchTree myTree = new BinarySearchTree("tree2.bin", 0);
+        myTree.insert(100);
+        myTree.insert(50);
+        myTree.print();
+    }
+    
     final int CREATE = 0;
     final int REUSE = 1; 
     private RandomAccessFile f; 
     long root; //the address of the root node in the file 
     long free; //the address in the file of the first node in the free list
 
-private class Node { 
-    private long left; 
-    private int data; 
-    private int count; 
-    private long right;
-    private long addr;
-    
-    private Node(long L,int d, long r, long a) { 
-    //constructor for a new node 
-        data  = d;
-        count = 1;
-        left  = L;
-        right = r;
-        addr  = a;
-           
-    } 
-    private Node(long addr) throws IOException{ 
-    //constructor for a node that exists and is stored in the file
-       // f = new RandomAccessFile(fileName,"r");
-        f.seek(addr);
+    private class Node { 
+        private long left; 
+        private int data; 
+        private int count; 
+        private long right;
+        private long addr;
         
-        data  = f.readInt();
-        count = f.readInt();
-        left  = f.readLong();
-        right = f.readLong();
-        this.addr = addr;
-        
-    } 
-    private void writeNode() throws IOException { 
-    //writes the node to the file at location addr
-        f.seek(addr);
-        f.writeInt(data);
-        f.writeInt(count);
-        f.writeLong(left);
-        f.writeLong(right);
-    }
-    private void writeNode(Long addr) throws IOException {
-       new Node(addr).writeNode();
-    }
+        private Node(long L,int d, long r, long a) { 
+        //constructor for a new node 
+            data  = d;
+            count = 1;
+            left  = L;
+            right = r;
+            addr  = a;
+               
+        } 
+        private Node(long addr) throws IOException{ 
+        //constructor for a node that exists and is stored in the file
+           // f = new RandomAccessFile(fileName,"r");
+            f.seek(addr);
+            
+           /* if(addr == root) {
+                f.seek(f.readLong());
+            }*/
+            data  = f.readInt();
+            count = f.readInt();
+            left  = f.readLong();
+            right = f.readLong();
+            this.addr = addr;
+            
+        } 
+        private void writeNode() throws IOException { 
+        //writes the node to the file at location addr
+            f.seek(addr);
+            f.writeInt(data);
+            f.writeInt(count);
+            f.writeLong(left);
+            f.writeLong(right);
+     }
 }
 
     public BinarySearchTree(String fname, int mode) throws IOException{ 
@@ -59,13 +66,13 @@ private class Node {
     //deleted before the new empty file is created 
     //if mode is REUSE an existing file is used if it exists otherwise a new empty file
     //is created 
-        File path = new File("tree.txt");
+        File path = new File(fname);
         if (path.exists() && mode == CREATE) {
             path.delete();
         } 
         
         f = new RandomAccessFile(path,"rw");
-        
+        f.seek(0);
         if(mode == CREATE) {
             root = 0;
             free = 0;
@@ -81,31 +88,40 @@ private class Node {
     public void insert(int d) throws IOException { 
     //insert d into the tree
     //if d is in the tree increment the count field associated with d
-        root = insert(new Node(root), d);
-        new Node(root).writeNode();
+        root = insert(root, d);
+        //new Node(root).writeNode();
     } 
     
-    private Long insert(Node node, int d) throws IOException {
-        if (node == null) {
-            return free; //Case when we walked off tree. getFree();?
+    private Long insert(Long nodeAddr, int d) throws IOException {
+        
+        if(nodeAddr == root) {
+            Long newAddr = getFree();
+            new Node(0,d,0,newAddr).writeNode();
+            return newAddr;
         }
-        if (node.data > d) {
-            node.left = insert(new Node(node.left), d); //Case when we need to look left
-            node.writeNode();
+        if (nodeAddr == 0) {
+            Long newAddr = getFree();
+            new Node(0,d,0,newAddr).writeNode();
+            return newAddr; //Case when we walked off tree. getFree();?
         }
-        else if (node.data < d) {
-            node.right = insert(new Node(node.right), d); //Case when we need to look right
-            node.writeNode();
+        Node temp = new Node(nodeAddr);
+        if (temp.data > d) {
+            temp.left = insert(temp.left, d); //Case when we need to look left
+            temp.writeNode();
+        }
+        else if (temp.data < d) {
+            temp.right = insert(temp.right, d); //Case when we need to look right
+            temp.writeNode();
         }
         else {
-            node.count++; //Case when a duplicate
-            node.writeNode();
+            temp.count++; //Case when a duplicate
+            temp.writeNode();
         }
-        
-        return node.addr; //Base case. Return self.
+        close();
+        return nodeAddr; //Base case. Return self.
     }
     
-    public int find(int d) throws IOException{ 
+    public int find(int d) throws IOException { 
     //if d is in the tree return the value of count associated with d 
     //otherwise return0
         return find(new Node(root), d);
@@ -118,17 +134,45 @@ private class Node {
         return r.count;
     }
     
-    public void removeOne(int d) throws IOException{ 
+    public void removeOne(int d) throws IOException {  
     //remove one copy of d from the tree
     //if the copy is the last copy removed from the tree
     //if d is not in the tree the method has no effect
     } 
-    public void removeAll(int d) throws IOException{ 
+    public void removeAll(int d) throws IOException { 
     //removed from the tree
     //if d is not in the tree the method has no effect
     } 
-    public void close() { 
+    public void close() throws IOException { 
     //close the randomaccessfile
     //before closing update the values of root and free if necessary 
+        f.seek(0);
+        f.writeLong(root);
+        f.writeLong(free);
+        f.close();
     } 
+    
+    private long getFree() throws IOException {
+        f.seek(free);
+        long addr = f.readLong();
+        
+        free = addr;
+        if(addr == 0) {
+            addr = f.length();
+        }
+        return addr;
+        
+    }
+    
+    public void print() throws IOException {
+        f.seek(free + 8);
+        while(f.getFilePointer() < f.length()) {
+            System.out.println("ADDRESS : " + f.readLong());
+            System.out.println("   DATA : " + f.readInt());
+            System.out.println("   COUNT: " + f.readInt());
+            System.out.println("   LEFT : " + f.readLong());
+            System.out.println("   RIGHT: " + f.readLong());
+            System.out.println();
+        }
+    }
 }
