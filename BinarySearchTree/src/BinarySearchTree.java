@@ -7,10 +7,18 @@ Implements a binary search tree of ints stored in a random access file.
 Duplicates are recorded by a count field associated with the int
 */
     public static void main(String[] args) throws IOException {
-        BinarySearchTree myTree = new BinarySearchTree("tree2.bin", 0);
+        BinarySearchTree myTree = new BinarySearchTree("tree.bin", 0);
         myTree.insert(100);
-        myTree.insert(50);
+        myTree.insert(100);
+        myTree.insert(25);
+        System.out.println("Pre Print");
         myTree.print();
+        System.out.println("REMOVING 25");
+        myTree.removeOne(25);
+        System.out.println("REMOVED 25");
+        //myTree.insert(150);
+        myTree.print();
+        System.out.println(myTree.free);
     }
     
     final int CREATE = 0;
@@ -93,12 +101,11 @@ Duplicates are recorded by a count field associated with the int
     } 
     
     private Long insert(Long nodeAddr, int d) throws IOException {
-        
-        if(nodeAddr == root) {
+/*        if(nodeAddr == root) {
             Long newAddr = getFree();
             new Node(0,d,0,newAddr).writeNode();
             return newAddr;
-        }
+        }*/
         if (nodeAddr == 0) {
             Long newAddr = getFree();
             new Node(0,d,0,newAddr).writeNode();
@@ -117,7 +124,6 @@ Duplicates are recorded by a count field associated with the int
             temp.count++; //Case when a duplicate
             temp.writeNode();
         }
-        close();
         return nodeAddr; //Base case. Return self.
     }
     
@@ -138,11 +144,54 @@ Duplicates are recorded by a count field associated with the int
     //remove one copy of d from the tree
     //if the copy is the last copy removed from the tree
     //if d is not in the tree the method has no effect
+        remove(root,d);
     } 
     public void removeAll(int d) throws IOException { 
     //removed from the tree
     //if d is not in the tree the method has no effect
     } 
+    
+    private long remove(long addr, int d) throws IOException {
+        if(addr == 0) {
+            return 0;
+        }
+        Node temp = new Node(addr);
+        Node retVal = temp;
+        if(temp.data == d){
+            temp.count--;
+            if(temp.count == 0){
+                free = temp.addr;
+                if(temp.left == 0) {
+                    retVal = new Node(temp.right);
+                }
+                else if(temp.right == 0) {
+                    retVal = new Node(temp.left);
+                } else {
+                    temp.left = replace(new Node(temp.left),temp).addr;
+                }
+            }
+        }
+        else if(d > 0) {
+            temp.left = remove(temp.left, d);
+        } else {
+            temp.right = remove(temp.right, d);
+        }
+        return retVal.addr;
+
+    }
+    
+    private Node replace(Node r, Node repHere) throws IOException{
+        if(r.right != 0){
+            r.right = replace(new Node(r.right), repHere).addr;
+            return r;
+        } else {
+            repHere.data = r.data;
+            repHere.count = r.count;
+            return new Node(r.left);
+       }
+    }
+
+    
     public void close() throws IOException { 
     //close the randomaccessfile
     //before closing update the values of root and free if necessary 
@@ -165,9 +214,9 @@ Duplicates are recorded by a count field associated with the int
     }
     
     public void print() throws IOException {
-        f.seek(free + 8);
+        f.seek(root);
         while(f.getFilePointer() < f.length()) {
-            System.out.println("ADDRESS : " + f.readLong());
+            System.out.println("ADDRESS : " + f.getFilePointer());
             System.out.println("   DATA : " + f.readInt());
             System.out.println("   COUNT: " + f.readInt());
             System.out.println("   LEFT : " + f.readLong());
@@ -175,4 +224,15 @@ Duplicates are recorded by a count field associated with the int
             System.out.println();
         }
     }
+    
+    public void printSingular(long addr) throws IOException {
+        f.seek(addr);
+        
+        System.out.println("ADDRESS : " + addr);
+        System.out.println("   DATA : " + f.readInt());
+        System.out.println("   COUNT: " + f.readInt());
+        System.out.println("   LEFT : " + f.readLong());
+        System.out.println("   RIGHT: " + f.readLong());
+    }
+    
 }
