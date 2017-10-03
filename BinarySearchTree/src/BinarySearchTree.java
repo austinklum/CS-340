@@ -8,26 +8,64 @@ Duplicates are recorded by a count field associated with the int
 */
     public static void main(String[] args) throws IOException {
         BinarySearchTree myTree = new BinarySearchTree("tree2.bin", 0);
-        myTree.insert(100);
+        /*myTree.insert(100);
         myTree.insert(100);
         myTree.insert(25);
         myTree.printPretty();
         myTree.removeOne(25);
+        System.out.println(myTree.free);
         myTree.insert(150);
         myTree.printPretty();
+        System.out.println(myTree.free);
         myTree.removeAll(100);
         myTree.printPretty();
         System.out.println(myTree.root);
         myTree.insert(150);
         myTree.insert(175);
-        myTree.printPretty();
+        myTree.printPretty();*/
         /*myTree.removeOne(150);
         myTree.insert(75);
         myTree.printPretty();
         myTree.removeOne(175);
         myTree.printPretty();*/
+      /*  System.out.println(myTree.free);
+       myTree.printSingular(myTree.free);*/
+        
+        /*Test on deleting root with 2 children*/
+      /*  myTree.insert(100);
+        myTree.insert(150);
+        myTree.insert(50);
+        myTree.insert(175);
+        myTree.insert(125);
+        myTree.printPretty();
+        System.out.println("---Removing a node with 2 children!---\n");
+        myTree.removeAll(100);
+        myTree.printPretty();
+        System.out.println(myTree.free);*/
+        
+        /*Test on deleting a node with 2 children*/
+        /*myTree.insert(100);
+        myTree.insert(150);
+        myTree.insert(50);
+        myTree.insert(175);
+        myTree.insert(125);
+        myTree.printPretty();
+        System.out.println("---Removing a node with 2 children!---\n");
+        myTree.removeOne(150);
+        myTree.printPretty();
+        System.out.println(myTree.free);*/
+        
+        /*Test on Deleting left leave*/
+        myTree.insert(100);
+        myTree.insert(150);
+        myTree.insert(50);
+        myTree.insert(175);
+        myTree.insert(125);
+        myTree.printPretty();
+        myTree.removeOne(125);
+        myTree.printPretty();
         System.out.println(myTree.free);
-       myTree.printSingular(myTree.free);
+        
        myTree.close();
     }
     
@@ -107,19 +145,13 @@ Duplicates are recorded by a count field associated with the int
     //insert d into the tree
     //if d is in the tree increment the count field associated with d
         root = insert(root, d);
-        //new Node(root).writeNode();
     } 
     
     private long insert(Long nodeAddr, int d) throws IOException {
-/*        if(nodeAddr == root) {
-            Long newAddr = getFree();
-            new Node(0,d,0,newAddr).writeNode();
-            return newAddr;
-        }*/
         if (nodeAddr == 0) {
             Long newAddr = getFree();
-            new Node(0,d,0,newAddr).writeNode();
-            return newAddr; //Case when we walked off tree. getFree();?
+            new Node(0, d, 0, newAddr).writeNode();
+            return newAddr; //Case when we walked off tree. 
         }
         Node temp = new Node(nodeAddr);
         if (temp.data > d) {
@@ -176,19 +208,18 @@ Duplicates are recorded by a count field associated with the int
             }
             temp.writeNode();
             if(temp.count == 0){
-                addToFree(temp.addr);
-                if(temp.left == 0) {
+                if (temp.left == 0) {
                     retVal = new Node(temp.right);
-                }
-                else if(temp.right == 0) {
+                    addToFree(temp.addr);
+                } else if(temp.right == 0) {
                     retVal = new Node(temp.left);
+                    addToFree(temp.addr);
                 } else {
                     temp.left = replace(new Node(temp.left),temp).addr;
                     temp.writeNode();
                 }
             }
-        }
-        else if(d > 0) {
+        } else if(d > 0) {
             temp.left = remove(temp.left, d, removeAll);
             temp.writeNode();
         } else {
@@ -209,6 +240,7 @@ Duplicates are recorded by a count field associated with the int
         } else {
             repHere.data = r.data;
             repHere.count = r.count;
+            addToFree(r.addr);
             repHere.writeNode();
             return new Node(r.left);
        }
