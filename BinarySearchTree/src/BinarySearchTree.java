@@ -11,14 +11,20 @@ Duplicates are recorded by a count field associated with the int
         myTree.insert(100);
         myTree.insert(100);
         myTree.insert(25);
-        System.out.println("Pre Print");
-        myTree.print();
-        System.out.println("REMOVING 25");
+        myTree.printPretty();
         myTree.removeOne(25);
-        System.out.println("REMOVED 25");
-        //myTree.insert(150);
-        myTree.print();
+        //myTree.removeAll(100);
+        myTree.printPretty();
         System.out.println(myTree.free);
+        myTree.insert(150);
+        myTree.insert(150);
+        myTree.insert(175);
+        myTree.printPretty();
+        System.out.println("------");
+        myTree.removeOne(150);
+        myTree.printPretty();
+        System.out.println(myTree.free);
+       myTree.printSingular(myTree.free);
     }
     
     final int CREATE = 0;
@@ -100,7 +106,7 @@ Duplicates are recorded by a count field associated with the int
         //new Node(root).writeNode();
     } 
     
-    private Long insert(Long nodeAddr, int d) throws IOException {
+    private long insert(Long nodeAddr, int d) throws IOException {
 /*        if(nodeAddr == root) {
             Long newAddr = getFree();
             new Node(0,d,0,newAddr).writeNode();
@@ -144,23 +150,29 @@ Duplicates are recorded by a count field associated with the int
     //remove one copy of d from the tree
     //if the copy is the last copy removed from the tree
     //if d is not in the tree the method has no effect
-        remove(root,d);
+        remove(root,d,false);
     } 
     public void removeAll(int d) throws IOException { 
     //removed from the tree
     //if d is not in the tree the method has no effect
+        remove(root,d,true);
     } 
     
-    private long remove(long addr, int d) throws IOException {
+    private long remove(long addr, int d, boolean removeAll) throws IOException {
         if(addr == 0) {
             return 0;
         }
         Node temp = new Node(addr);
         Node retVal = temp;
         if(temp.data == d){
-            temp.count--;
+            if(removeAll) {
+                temp.count = 0;
+            } else {
+                temp.count--;
+            }
+            temp.writeNode();
             if(temp.count == 0){
-                free = temp.addr;
+                addToFree(temp.addr);
                 if(temp.left == 0) {
                     retVal = new Node(temp.right);
                 }
@@ -168,25 +180,32 @@ Duplicates are recorded by a count field associated with the int
                     retVal = new Node(temp.left);
                 } else {
                     temp.left = replace(new Node(temp.left),temp).addr;
+                    temp.writeNode();
                 }
             }
         }
         else if(d > 0) {
-            temp.left = remove(temp.left, d);
+            temp.left = remove(temp.left, d, removeAll);
+            temp.writeNode();
         } else {
-            temp.right = remove(temp.right, d);
+            temp.right = remove(temp.right, d, removeAll);
+            temp.writeNode();
         }
+        retVal.writeNode();
         return retVal.addr;
 
     }
     
+    
     private Node replace(Node r, Node repHere) throws IOException{
         if(r.right != 0){
             r.right = replace(new Node(r.right), repHere).addr;
+            r.writeNode();
             return r;
         } else {
             repHere.data = r.data;
             repHere.count = r.count;
+            repHere.writeNode();
             return new Node(r.left);
        }
     }
@@ -202,15 +221,29 @@ Duplicates are recorded by a count field associated with the int
     } 
     
     private long getFree() throws IOException {
-        f.seek(free);
-        long addr = f.readLong();
-        
-        free = addr;
-        if(addr == 0) {
+        long addr = 0;
+        //When at the end of free, write to the end of file.
+        if (free == 0) {
             addr = f.length();
+        } else {
+            //New address is where free is pointing
+            addr = free;
+            //Move free value to next in list.
+            f.seek(free);
+            free = f.readLong();
         }
         return addr;
+    }
+    
+    private void addToFree(long addr) throws IOException {
+        //Seek to position to write to
+        f.seek(addr);
         
+        //Write out old value of free
+        f.writeLong(free);
+        
+        //Set free to new value
+        free = addr;
     }
     
     public void print() throws IOException {
@@ -227,12 +260,24 @@ Duplicates are recorded by a count field associated with the int
     
     public void printSingular(long addr) throws IOException {
         f.seek(addr);
-        
-        System.out.println("ADDRESS : " + addr);
+        long next = f.readLong();
+        System.out.println("Next Address = " + next);
+        f.seek(next);
+        long nextNext = f.readLong();
+        System.out.println("Next-Next Address = " + nextNext);
+        /*System.out.println("ADDRESS : " + addr);
         System.out.println("   DATA : " + f.readInt());
         System.out.println("   COUNT: " + f.readInt());
         System.out.println("   LEFT : " + f.readLong());
-        System.out.println("   RIGHT: " + f.readLong());
+        System.out.println("   RIGHT: " + f.readLong());*/
     }
     
+    public void printPretty() throws IOException {
+        f.seek(root);
+        System.out.printf("%7s %7s %7s %7s %7s\n", "Address", "Data", "Count", "Left", "Right");
+        while(f.getFilePointer() < f.length()) {
+            Node n = new Node(f.getFilePointer());
+            System.out.printf("%7s %7s %7s %7s %7s\n", n.addr, n.data, n.count, n.left, n.right);
+        }
+    }
 }
