@@ -7,24 +7,28 @@ Implements a binary search tree of ints stored in a random access file.
 Duplicates are recorded by a count field associated with the int
 */
     public static void main(String[] args) throws IOException {
-        BinarySearchTree myTree = new BinarySearchTree("tree.bin", 0);
+        BinarySearchTree myTree = new BinarySearchTree("tree2.bin", 0);
         myTree.insert(100);
         myTree.insert(100);
         myTree.insert(25);
         myTree.printPretty();
         myTree.removeOne(25);
-        //myTree.removeAll(100);
-        myTree.printPretty();
-        System.out.println(myTree.free);
         myTree.insert(150);
+        myTree.printPretty();
+        myTree.removeAll(100);
+        myTree.printPretty();
+        System.out.println(myTree.root);
         myTree.insert(150);
         myTree.insert(175);
         myTree.printPretty();
-        System.out.println("------");
-        myTree.removeOne(150);
+        /*myTree.removeOne(150);
+        myTree.insert(75);
         myTree.printPretty();
+        myTree.removeOne(175);
+        myTree.printPretty();*/
         System.out.println(myTree.free);
        myTree.printSingular(myTree.free);
+       myTree.close();
     }
     
     final int CREATE = 0;
@@ -150,12 +154,12 @@ Duplicates are recorded by a count field associated with the int
     //remove one copy of d from the tree
     //if the copy is the last copy removed from the tree
     //if d is not in the tree the method has no effect
-        remove(root,d,false);
+       root = remove(root,d,false);
     } 
     public void removeAll(int d) throws IOException { 
     //removed from the tree
     //if d is not in the tree the method has no effect
-        remove(root,d,true);
+        root = remove(root,d,true);
     } 
     
     private long remove(long addr, int d, boolean removeAll) throws IOException {
@@ -273,11 +277,18 @@ Duplicates are recorded by a count field associated with the int
     }
     
     public void printPretty() throws IOException {
-        f.seek(root);
+        f.seek(16);
         System.out.printf("%7s %7s %7s %7s %7s\n", "Address", "Data", "Count", "Left", "Right");
         while(f.getFilePointer() < f.length()) {
-            Node n = new Node(f.getFilePointer());
-            System.out.printf("%7s %7s %7s %7s %7s\n", n.addr, n.data, n.count, n.left, n.right);
+             Node n = new Node(f.getFilePointer());
+            if (f.getFilePointer() - 24 == root) {
+                System.out.printf("%7s %7s %7s %7s %7s %7s\n", n.addr, n.data, n.count, n.left, n.right, "[ROOT]");
+            } else if (f.getFilePointer() - 24 == free) {
+                System.out.printf("%7s %7s %7s %7s %7s %7s\n", n.addr, n.data, n.count, n.left, n.right, "[FREE]");
+            } else {
+                System.out.printf("%7s %7s %7s %7s %7s\n", n.addr, n.data, n.count, n.left, n.right);
+            }
         }
+        System.out.println();
     }
 }
