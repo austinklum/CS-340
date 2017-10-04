@@ -32,7 +32,7 @@ Duplicates are recorded by a count field associated with the int
        myTree.printSingular(myTree.free);*/
         
         /*Test on deleting root with 2 children*/
-      /*  myTree.insert(100);
+     /* myTree.insert(100);
         myTree.insert(150);
         myTree.insert(50);
         myTree.insert(175);
@@ -44,7 +44,7 @@ Duplicates are recorded by a count field associated with the int
         System.out.println(myTree.free);*/
         
         /*Test on deleting a node with 2 children*/
-        /*myTree.insert(100);
+      /* myTree.insert(100);
         myTree.insert(150);
         myTree.insert(50);
         myTree.insert(175);
@@ -196,10 +196,12 @@ Duplicates are recorded by a count field associated with the int
     
     private long remove(long addr, int d, boolean removeAll) throws IOException {
         if(addr == 0) {
+            //addToFree(0);
             return 0;
         }
         Node temp = new Node(addr);
         Node retVal = temp;
+        System.out.println("Temp.Data = " + temp.data  + "  d = " + d);
         if(temp.data == d){
             if(removeAll) {
                 temp.count = 0;
@@ -208,6 +210,7 @@ Duplicates are recorded by a count field associated with the int
             }
             temp.writeNode();
             if(temp.count == 0){
+                System.out.println("Count = 0; Removing node at : " + temp.addr);
                 if (temp.left == 0) {
                     retVal = new Node(temp.right);
                     addToFree(temp.addr);
@@ -219,7 +222,7 @@ Duplicates are recorded by a count field associated with the int
                     temp.writeNode();
                 }
             }
-        } else if(d > 0) {
+        } else if(d < 0) {
             temp.left = remove(temp.left, d, removeAll);
             temp.writeNode();
         } else {
@@ -272,14 +275,19 @@ Duplicates are recorded by a count field associated with the int
     }
     
     private void addToFree(long addr) throws IOException {
+        System.out.println("Adding to FREE");
         //Seek to position to write to
+        System.out.println("Address inputed = " + addr);
         f.seek(addr);
-        
+        System.out.println("F = " + f.getFilePointer());
+        System.out.println("Free = " + free);
         //Write out old value of free
         f.writeLong(free);
-        
+        System.out.println("F Now equals = "  + f.getFilePointer());
         //Set free to new value
         free = addr;
+        System.out.println("Free now equals = " + free);
+        System.out.println();
     }
     
     public void print() throws IOException {
