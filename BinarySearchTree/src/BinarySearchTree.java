@@ -7,7 +7,7 @@ Implements a binary search tree of ints stored in a random access file.
 Duplicates are recorded by a count field associated with the int
 */
     public static void main(String[] args) throws IOException {
-        BinarySearchTree myTree = new BinarySearchTree("tree2.bin", 0);
+       // BinarySearchTree myTree = new BinarySearchTree("tree2.bin", 0);
         /*myTree.insert(100);
         myTree.insert(100);
         myTree.insert(25);
@@ -66,8 +66,8 @@ Duplicates are recorded by a count field associated with the int
         myTree.printPretty();
         System.out.println(myTree.free);*/
         
-        /*Test on remove all*/
-        myTree.insert(100);
+        /*Test that adds to tree, removes everything, and makes a new tree using all file space*/
+/*        myTree.insert(100);
         myTree.insert(150);
         myTree.insert(50);
         myTree.insert(175);
@@ -113,7 +113,8 @@ Duplicates are recorded by a count field associated with the int
         myTree.insert(75);
         myTree.insert(-5);
         myTree.printPretty();
-        myTree.close();
+        myTree.printInOrder();
+        myTree.close();*/
     }
     
     final int CREATE = 0;
@@ -122,6 +123,8 @@ Duplicates are recorded by a count field associated with the int
     long root; //the address of the root node in the file 
     long free; //the address in the file of the first node in the free list
 
+    //I added a private long addr to Node class for the address that the node is located at
+    //This made some of the methods easier to implement/conceptualize.
     private class Node { 
         private long left; 
         private int data; 
@@ -218,7 +221,7 @@ Duplicates are recorded by a count field associated with the int
     
     public int find(int d) throws IOException { 
     //if d is in the tree return the value of count associated with d 
-    //otherwise return0
+    //otherwise return 0
         return find(new Node(root), d);
     }
     
@@ -241,9 +244,17 @@ Duplicates are recorded by a count field associated with the int
         root = remove(root,d,true);
     } 
     
+    /**
+     * Recursive implementation of remove.
+     * 
+     * @param addr address where to start reading from
+     * @param d data
+     * @param removeAll Sets count to 0 if true, else decrements by 1
+     * @return address of return value
+     * @throws IOException
+     */
     private long remove(long addr, int d, boolean removeAll) throws IOException {
         if(addr == 0) {
-            //addToFree(0);
             return 0;
         }
         Node temp = new Node(addr);
@@ -311,7 +322,15 @@ Duplicates are recorded by a count field associated with the int
         return retVal.addr;
     }
     
-    
+    /**
+     * Find the largest value N on the left sub-tree.
+     * Replace the contents of the caller with the contents of N
+     * 
+     * @param r root
+     * @param repHere replace here value
+     * @return The switched contents of the new node reference
+     * @throws IOException
+     */
     private Node replace(Node r, Node repHere) throws IOException{
         if(r.right != 0){
             r.right = replace(new Node(r.right), repHere).addr;
@@ -336,6 +355,13 @@ Duplicates are recorded by a count field associated with the int
         f.close();
     } 
     
+    /**
+     * Finds the next free address location
+     * May be the the next address in free or extend onto the file.
+     * 
+     * @return The next free address location
+     * @throws IOException
+     */
     private long getFree() throws IOException {
         long addr = 0;
         //When at the end of free, write to the end of file.
@@ -351,6 +377,12 @@ Duplicates are recorded by a count field associated with the int
         return addr;
     }
     
+    /**
+     * Puts the new address in free and puts free's old value into the new address
+     * 
+     * @param addr address of node to be added
+     * @throws IOException
+     */
     private void addToFree(long addr) throws IOException {
         //Seek to position to write to
         f.seek(addr);
@@ -359,7 +391,13 @@ Duplicates are recorded by a count field associated with the int
         //Set free to new value
         free = addr;
     }
-    
+    /**
+     * A print method that is not the most useful or accurate
+     * I would avoid trying to use it.
+     * 
+     * @deprecated
+     * @throws IOException
+     */
     public void print() throws IOException {
         f.seek(root);
         while(f.getFilePointer() < f.length()) {
@@ -371,21 +409,25 @@ Duplicates are recorded by a count field associated with the int
             System.out.println();
         }
     }
-    
+    /**
+     * A print method that is not the most useful or accurate
+     * I would avoid trying to use it.
+     * 
+     * @deprecated
+     * @throws IOException
+     */
     public void printSingular(long addr) throws IOException {
-        f.seek(addr);
-        long next = f.readLong();
-        System.out.println("Next Address = " + next);
-        f.seek(next);
-        long nextNext = f.readLong();
-        System.out.println("Next-Next Address = " + nextNext);
-        /*System.out.println("ADDRESS : " + addr);
+        System.out.println("ADDRESS : " + addr);
         System.out.println("   DATA : " + f.readInt());
         System.out.println("   COUNT: " + f.readInt());
         System.out.println("   LEFT : " + f.readLong());
-        System.out.println("   RIGHT: " + f.readLong());*/
+        System.out.println("   RIGHT: " + f.readLong());
     }
-    
+    /**
+     * Prints out the content into a format similar to the provided file structure.
+     * 
+     * @throws IOException
+     */
     public void printPretty() throws IOException {
         f.seek(16);
         System.out.printf("%7s %7s %7s %7s %7s\n", "Address", "Data", "Count", "Left", "Right");
@@ -401,4 +443,24 @@ Duplicates are recorded by a count field associated with the int
         }
         System.out.println();
     }
+    /**
+     * Prints data in tree in ascending order
+     * @throws IOException
+     */
+    public void printInOrder() throws IOException {
+         printInOrder(new Node(root));
+    }
+    /**
+     * Recursive helper method for printInOrder(). Prints data in tree in ascending order
+     * @param n node
+     * @throws IOException
+     */
+    private void printInOrder(Node n) throws IOException {
+        if(n.addr != 0) {
+            printInOrder(new Node(n.left));
+            System.out.print(n.data + " ");
+            printInOrder(new Node(n.right));
+        }
+    }
+    
 }
