@@ -32,7 +32,7 @@ Duplicates are recorded by a count field associated with the int
        myTree.printSingular(myTree.free);*/
         
         /*Test on deleting root with 2 children*/
-     /* myTree.insert(100);
+        /*myTree.insert(100);
         myTree.insert(150);
         myTree.insert(50);
         myTree.insert(175);
@@ -56,7 +56,7 @@ Duplicates are recorded by a count field associated with the int
         System.out.println(myTree.free);*/
         
         /*Test on Deleting left leave*/
-        myTree.insert(100);
+       /* myTree.insert(100);
         myTree.insert(150);
         myTree.insert(50);
         myTree.insert(175);
@@ -64,9 +64,56 @@ Duplicates are recorded by a count field associated with the int
         myTree.printPretty();
         myTree.removeOne(125);
         myTree.printPretty();
-        System.out.println(myTree.free);
+        System.out.println(myTree.free);*/
         
-       myTree.close();
+        /*Test on remove all*/
+        myTree.insert(100);
+        myTree.insert(150);
+        myTree.insert(50);
+        myTree.insert(175);
+        myTree.insert(125);
+        myTree.insert(175);
+        myTree.insert(175);
+        myTree.insert(125);
+        myTree.insert(175);
+        myTree.printPretty();
+        myTree.removeAll(175);
+        
+        
+        myTree.printPretty();
+        myTree.removeAll(100);
+        
+        myTree.printPretty();
+        myTree.removeAll(150);
+        
+        myTree.printPretty();
+        myTree.removeAll(50);
+        
+        myTree.printPretty();
+        myTree.removeAll(125);
+        
+        System.out.println("----------REBUILDING A TREE---------");
+        
+        myTree.printPretty();
+        myTree.insert(1);
+        
+        myTree.printPretty();
+        myTree.insert(200);
+        
+        myTree.printPretty();
+        myTree.insert(100);
+        
+        myTree.printPretty();
+        myTree.insert(150);
+        
+        myTree.printPretty();
+        myTree.insert(250);
+        
+        myTree.printPretty();
+        myTree.insert(75);
+        myTree.insert(-5);
+        myTree.printPretty();
+        myTree.close();
     }
     
     final int CREATE = 0;
@@ -201,37 +248,67 @@ Duplicates are recorded by a count field associated with the int
         }
         Node temp = new Node(addr);
         Node retVal = temp;
-        System.out.println("Temp.Data = " + temp.data  + "  d = " + d);
-        if(temp.data == d){
+        //When data is greater than d; Go right in the tree.
+        if(temp.data < d){
+            temp.right = remove(temp.right, d, removeAll);
+            temp.writeNode();
+            
+        //When data is less than d; Go left in the tree.
+        } else if(temp.data > d) {
+            temp.left = remove(temp.left, d, removeAll);
+            temp.writeNode();
+            
+        //We found the correct node to modify! temp.data == d 
+        } else {
+            //Modify count based on weather or not it is a removeAll() call.
             if(removeAll) {
                 temp.count = 0;
             } else {
                 temp.count--;
             }
             temp.writeNode();
+            
+            //Check if the node should be removed.
             if(temp.count == 0){
-                System.out.println("Count = 0; Removing node at : " + temp.addr);
+                /* ******************************************************************************
+                 * Case 1: No children
+                 * Case 2: 1 right child
+                 * 
+                 * Check for left child;
+                 * If no left child connect the node that called the method with the right node.
+                 * *******************************************************************************
+                 */
                 if (temp.left == 0) {
                     retVal = new Node(temp.right);
                     addToFree(temp.addr);
+                    
+                /* ******************************************************************************
+                 * Case 3: 1 left child
+                 * 
+                 * Check for right child;
+                 * If no right child connect the node that called the method with the left node.
+                 * *******************************************************************************
+                 */
                 } else if(temp.right == 0) {
                     retVal = new Node(temp.left);
                     addToFree(temp.addr);
+                
+                /* ******************************************************************************
+                 * Case 4: 2 children
+                 * 
+                 * Find the largest value N on the left sub-tree
+                 * Replace the contents of the caller with the contents of N
+                 * *******************************************************************************
+                 */
                 } else {
                     temp.left = replace(new Node(temp.left),temp).addr;
                     temp.writeNode();
                 }
-            }
-        } else if(d < 0) {
-            temp.left = remove(temp.left, d, removeAll);
-            temp.writeNode();
-        } else {
-            temp.right = remove(temp.right, d, removeAll);
-            temp.writeNode();
-        }
+            } // End of count == 0 
+        } 
+        
         retVal.writeNode();
         return retVal.addr;
-
     }
     
     
@@ -275,19 +352,12 @@ Duplicates are recorded by a count field associated with the int
     }
     
     private void addToFree(long addr) throws IOException {
-        System.out.println("Adding to FREE");
         //Seek to position to write to
-        System.out.println("Address inputed = " + addr);
         f.seek(addr);
-        System.out.println("F = " + f.getFilePointer());
-        System.out.println("Free = " + free);
         //Write out old value of free
         f.writeLong(free);
-        System.out.println("F Now equals = "  + f.getFilePointer());
         //Set free to new value
         free = addr;
-        System.out.println("Free now equals = " + free);
-        System.out.println();
     }
     
     public void print() throws IOException {
