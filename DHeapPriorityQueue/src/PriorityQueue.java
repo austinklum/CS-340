@@ -252,7 +252,6 @@ public class PriorityQueue {
 		
 		//Loop through all possibilities and check if there are children with lesser value.
 		int k = 1;
-		// System.out.println("ChildToCheck = " + childToCheck);
 		while(k <= order && childToCheck < size) {
 			if(queue[childToCheck].priority < queue[minChild].priority) {
 				minChild = childToCheck;
@@ -260,9 +259,6 @@ public class PriorityQueue {
 			//Increment k and the child position.
 			k++;
 			childToCheck = (order * i) + (k);
-		}
-		if(minChild == childToCheck) {
-		    //minChild = i;
 		}
 		return minChild;
 	}
