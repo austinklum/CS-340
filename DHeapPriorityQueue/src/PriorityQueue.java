@@ -188,16 +188,13 @@ public class PriorityQueue {
 		
 		//While not at the end of the tree
 		while(child <= size) {
-			
-			//If there are no child nodes.
-		    if(child == findMinChild(child)) {
-		        queue[child] = temp;
+	          //Find the smallest child given a parent
+		    child = findMinChild(child);
+		    
+			//If the smallest child is outside of the array.
+		    if(child > size) {
 		        break;
-		    //Find the smallest child given a parent
-		    }else {
-		        child = findMinChild(child);
 		    }
-			
 			//Shift child up if less than temp
 			if(temp.priority > queue[child].priority) {
 				queue[(child - 1)/order] = queue[child];
@@ -207,9 +204,7 @@ public class PriorityQueue {
 			}
 		}
 		//We found where to place our new data
-		if(queue[child].priority != temp.priority) {
-		    queue[(child - 1)/order] = temp;
-		}
+		queue[(child - 1)/order] = temp;
 	}
 	
 	public int getSize() {
@@ -267,7 +262,7 @@ public class PriorityQueue {
 			childToCheck = (order * i) + (k);
 		}
 		if(minChild == childToCheck) {
-		    minChild = i;
+		    //minChild = i;
 		}
 		return minChild;
 	}
