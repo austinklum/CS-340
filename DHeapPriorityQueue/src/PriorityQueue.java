@@ -189,20 +189,17 @@ public class PriorityQueue {
 		//While not at the end of the tree
 		while(child <= size) {
 			
-			//Find the smallest child given a parent
+			//If there are no child nodes.
 		    if(child == findMinChild(child)) {
-		       // System.out.println("Child is a leaf");
-		       // queue[(child - 1)/order] = queue[child];
-		        //System.out.println("Leaf = " + temp.data);
 		        queue[child] = temp;
 		        break;
+		    //Find the smallest child given a parent
 		    }else {
 		        child = findMinChild(child);
 		    }
 			
 			//Shift child up if less than temp
 			if(temp.priority > queue[child].priority) {
-			    //System.out.printf("Shifting child to %d", temp.priority);
 				queue[(child - 1)/order] = queue[child];
 			}
 			else{
