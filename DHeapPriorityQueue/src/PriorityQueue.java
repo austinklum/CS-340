@@ -6,7 +6,7 @@ public class PriorityQueue {
 	//implements a d-heap based priority queue
 	//the priority is an int (low value is high priority)
 	//associated with each priority is an object
-	public static void main(String[] args) throws FileNotFoundException {
+	//public static void main(String[] args) throws FileNotFoundException {
 		/*
 		int size;
 		int ord;
@@ -41,8 +41,112 @@ public class PriorityQueue {
 		
 		System.out.println();
 		myQ.toArrayString();*/
-	}
-	
+	//}
+    public static void main(String args[]) {
+        PriorityQueue p1 = new PriorityQueue(5, 100);
+        PriorityQueue p2 = new PriorityQueue(6, 100);
+        PriorityQueue p3 = new PriorityQueue(7, 100);
+
+        int p = -1; //pointless initialization to keep the compiler happy
+        p1.insert(0, new Integer(0));
+        System.out.println("First insert");
+
+        for (int i = 1; i < 100; i++)
+            p1.insert(i, new Integer(i));
+
+        for (int i = 0; i < 100; i++)
+            p2.insert(i, new Integer(i));
+
+        for (int i = 0; i < 100; i++)
+            p3.insert(i, new Integer(i));
+
+        System.out.println("First insert tests");
+
+        System.out.print(p1.getPriority()+",");
+        while (!p1.empty()) {
+            p = p1.getPriority();
+            Object d = p1.getData();
+            p1.remove();
+        }
+        System.out.println(p);
+
+        System.out.print(p2.getPriority()+",");
+
+        while (!p2.empty()) {
+            p = p2.getPriority();
+            Object d = p2.getData();
+            p2.remove();
+        }
+        System.out.println(p);
+
+        System.out.print(p3.getPriority()+",");
+
+        while (!p3.empty()) {
+            p = p3.getPriority();
+            Object d = p3.getData();
+          
+            p3.remove(); 
+        }
+        System.out.println(p);
+        System.out.println("First Remove Test");
+
+        for (int i = 100; i > 0 ; i--)
+            p1.insert(i, new Integer(i));
+
+        for (int i = 100; i > 0 ; i--)
+            p2.insert(i, new Integer(i));
+
+        for (int i = 100; i > 0 ; i--)
+            p3.insert(i, new Integer(i));
+
+        System.out.println("Second insert tests");
+
+        System.out.print(p1.getPriority()+",");
+        while (!p1.empty()) {
+            p = p1.getPriority();
+            Object d = p1.getData();
+            p1.remove();
+        }
+        System.out.println(p);
+
+        System.out.print(p2.getPriority()+",");
+
+        while (!p2.empty()) {
+            p = p2.getPriority();
+            Object d = p2.getData();
+            p2.remove();
+        }
+        System.out.println(p);
+
+        System.out.print(p3.getPriority()+",");
+
+        while (!p3.empty()) {
+            p = p3.getPriority();
+            Object d = p3.getData();
+            p3.remove();
+        }
+        System.out.println(p);
+        System.out.println("Second Remove Test");
+
+        Random r1 = new Random(1000);
+        while (!p3.full()) {
+            p = r1.nextInt(200);
+            System.out.print(p+",");
+            p3.insert(p, new Integer(p));
+        }
+        System.out.println();
+
+        while (!p3.empty()) {
+           System.out.print(p3.getPriority()+",");
+            Object d = p3.getData();
+            p3.remove();
+        }
+        System.out.println();
+        System.out.println("Third Remove Test");
+
+
+    }
+    
 	private class Item{
 		private int priority;
 		private Object data;
@@ -86,10 +190,19 @@ public class PriorityQueue {
 		while(child <= size) {
 			
 			//Find the smallest child given a parent
-			child = findMinChild(child);
+		    if(child == findMinChild(child)) {
+		       // System.out.println("Child is a leaf");
+		       // queue[(child - 1)/order] = queue[child];
+		        //System.out.println("Leaf = " + temp.data);
+		        queue[child] = temp;
+		        break;
+		    }else {
+		        child = findMinChild(child);
+		    }
 			
 			//Shift child up if less than temp
 			if(temp.priority > queue[child].priority) {
+			    //System.out.printf("Shifting child to %d", temp.priority);
 				queue[(child - 1)/order] = queue[child];
 			}
 			else{
@@ -97,7 +210,9 @@ public class PriorityQueue {
 			}
 		}
 		//We found where to place our new data
-		queue[(child - 1)/order] = temp;
+		if(queue[child].priority != temp.priority) {
+		    queue[(child - 1)/order] = temp;
+		}
 	}
 	
 	public int getSize() {
@@ -145,6 +260,7 @@ public class PriorityQueue {
 		
 		//Loop through all possibilities and check if there are children with lesser value.
 		int k = 1;
+		// System.out.println("ChildToCheck = " + childToCheck);
 		while(k <= order && childToCheck < size) {
 			if(queue[childToCheck].priority < queue[minChild].priority) {
 				minChild = childToCheck;
@@ -152,6 +268,9 @@ public class PriorityQueue {
 			//Increment k and the child position.
 			k++;
 			childToCheck = (order * i) + (k);
+		}
+		if(minChild == childToCheck) {
+		    minChild = i;
 		}
 		return minChild;
 	}
