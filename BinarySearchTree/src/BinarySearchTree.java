@@ -7,7 +7,7 @@ Implements a binary search tree of ints stored in a random access file.
 Duplicates are recorded by a count field associated with the int
 */
     public static void main(String[] args) throws IOException {
-       // BinarySearchTree myTree = new BinarySearchTree("tree2.bin", 0);
+        BinarySearchTree myTree = new BinarySearchTree("tree2.bin",0);
         /*myTree.insert(100);
         myTree.insert(100);
         myTree.insert(25);
@@ -113,8 +113,40 @@ Duplicates are recorded by a count field associated with the int
         myTree.insert(75);
         myTree.insert(-5);
         myTree.printPretty();
-        myTree.printInOrder();
-        myTree.close();*/
+        myTree.printInOrder();*/
+/*        myTree.insert(42);
+        myTree.insert(42);
+        myTree.insert(45);
+        myTree.insert(89);
+        myTree.insert(34);
+        myTree.insert(98);
+        myTree.insert(90);
+        myTree.insert(55);
+        myTree.insert(55);
+        myTree.insert(32);
+        myTree.insert(56);
+        myTree.insert(75);
+        myTree.printPretty();
+        myTree.removeOne(98);
+        myTree.printPretty();
+        myTree.removeOne(32);
+        myTree.printPretty();*/
+        //myTree.insert(32);
+        myTree.printPretty();
+        myTree.removeOne(89);
+        myTree.removeAll(10);
+        myTree.insert(56);
+        myTree.printPretty();
+        myTree.insert(57);
+        myTree.insert(55);
+        myTree.printPretty();
+        myTree.removeAll(56);
+        myTree.removeOne(55);
+        myTree.printPretty();
+        myTree.removeOne(99);
+        myTree.printPretty();
+        
+       myTree.close();
     }
     
     final int CREATE = 0;
@@ -345,7 +377,6 @@ Duplicates are recorded by a count field associated with the int
        }
     }
 
-    
     public void close() throws IOException { 
     //close the randomaccessfile
     //before closing update the values of root and free if necessary 
