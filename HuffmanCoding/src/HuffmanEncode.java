@@ -107,25 +107,34 @@ public class HuffmanEncode {
         System.out.println(queue);
     }
     
-   private void writeTree(String in, String out){
+   private void writeTree(String in, String out) {
+       //arr will be my "hash map" for the encodings 
+       //KEY: ASCII value char VALUE: Encoding path from iterator
        String[] arr = new String[128];
+       
        HuffmanTree tree = queue.poll().data;
        Iterator<String> iter = tree.iterator();
+       
        while(iter.hasNext()) {
            String str = iter.next();
-           arr[str.charAt(0)] = str.substring(1, str.length());
+           System.out.println(str);
+           arr[str.charAt(0)] = str.substring(1);
        }
        
        try {
-           HuffmanOutputStream hout = new HuffmanOutputStream(out,tree.toString(), totalChars);
+           //Create the reader and writer
+           HuffmanOutputStream writer = new HuffmanOutputStream(out,tree.toString(), totalChars);
            BufferedReader reader = new BufferedReader(new FileReader(in));
+           
            int c = 0;
            while((c = reader.read()) != -1) {
                for(int i = 0; i < arr[c].length(); i++) {
-                   hout.writeBit(Integer.parseInt(arr[c]));
+                   System.out.print(Integer.parseInt(arr[c].substring(i,i+1)));
+                   writer.writeBit(Integer.parseInt(arr[c].substring(i,i+1)));
                }
+               System.out.println();
            }
-           hout.close();
+           writer.close();
            reader.close();
        } catch (IOException e) {
            
