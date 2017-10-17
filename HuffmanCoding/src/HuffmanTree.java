@@ -59,7 +59,6 @@ public class HuffmanTree {
     } 
     public boolean atLeaf() {
         return current.left == null && current.right == null;
-        
     } 
     public char current() {
         return current.data; 
@@ -76,11 +75,11 @@ public class HuffmanTree {
             makePath(root,"");
         } 
         public boolean hasNext() {
-            return atLeaf(); 
+            return !paths.isEmpty();
             
         } 
         public String next() {
-            return null; 
+            return paths.poll(); 
             
         } 
         public void remove() { 
@@ -88,18 +87,21 @@ public class HuffmanTree {
         }
         
         private void makePath(Node r, String path) {
-            if(atLeaf()) {
+            System.out.println("R is : " + r);
+            if(r.left == null && r.right == null) {
+                System.out.println("inside base case");
                 paths.add(r.data + path);
+                return;
             }
+            System.out.println("Going left!");
             makePath(r.left, path + "0");
+            System.out.println("Going right!");
             makePath(r.right, path + "1");
         }
     } 
     
     public Iterator<String> iterator() {
-        return null; 
-      //return a PathIterator object 
-        
+        return new PathIterator();
     } 
     public String toString() {
     //return a post order representation of the tree 

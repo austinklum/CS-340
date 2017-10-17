@@ -40,9 +40,7 @@ public class HuffmanEncode {
         totalChars = 0;
         readFile(in);
         buildTree();
-        HuffmanTree tree = queue.poll().data;
-        System.out.println("Foo");
-        System.out.println(tree.toString());
+        writeTree(in, out);
     } 
 
     private void readFile(String in) {
@@ -108,5 +106,32 @@ public class HuffmanEncode {
         //Step 5.) Repeat
         System.out.println(queue);
     }
-
+    
+   private void writeTree(String in, String out){
+       String[] arr = new String[128];
+       HuffmanTree tree = queue.poll().data;
+       Iterator<String> iter = tree.iterator();
+       while(iter.hasNext()) {
+           String str = iter.next();
+           arr[str.charAt(0)] = str.substring(1, str.length());
+       }
+       
+       try {
+           HuffmanOutputStream hout = new HuffmanOutputStream(out,tree.toString(), totalChars);
+           BufferedReader reader = new BufferedReader(new FileReader(in));
+           int c = 0;
+           while((c = reader.read()) != -1) {
+               for(int i = 0; i < arr[c].length(); i++) {
+                   hout.writeBit(Integer.parseInt(arr[c]));
+               }
+           }
+           hout.close();
+           reader.close();
+       } catch (IOException e) {
+           
+       }
+       
+       
+    }
+    
 }
