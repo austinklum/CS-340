@@ -12,7 +12,9 @@ public class HuffmanOutputStream extends BitOutputStream {
             d.writeInt(totalChars); 
         } catch (IOException e) { 
             
-        } 
+        }
+        currentByte = 0;
+        bitCount = 0;
     } 
     public void writeBit(int bit) { 
     //PRE bit == 0 || bit == 1 

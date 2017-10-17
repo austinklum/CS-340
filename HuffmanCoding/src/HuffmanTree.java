@@ -12,6 +12,9 @@ public class HuffmanTree {
             right = R; 
         }
         public String toString() {
+//            if(data == '') {
+//                return "Data is null. :(";
+//            }
             return "Data: " + data;
         }
     } 
@@ -32,16 +35,40 @@ public class HuffmanTree {
     //Assumes t represents a post order representation of the tree  
     //where a node is either a leaf or has two children. nonLeaf  
     //is the char value of the data in the non-leaf nodes 
+        /* HOW TO BUILD A TREE FROM A STRING
+         * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         * 1.) Pop off 2 items whenever a nonleaf is seen
+         * 2.) Merge the two together
+         * 3.) Add back onto stack
+         * 4.) Repeat until all values in string rep is used.
+         */
         
+        char arr[] = t.toCharArray();
+        Stack<HuffmanTree> stack = new Stack<>();
+        
+        for(int i = 0; i < arr.length; i++) {
+            //System.out.println(arr[i]);
+            //System.out.println("Blew up?");
+            //Step 1.) pop off 2 items upon seeing a nonleaf
+            if (arr[i] == nonLeaf) {
+                //Get poppin!
+                HuffmanTree rightItem = stack.pop();
+                HuffmanTree leftItem = stack.pop();
+               // System.out.println("Left Item = " + leftItem + "Right Item = " + rightItem);
+                //Step 2.) Merge the two
+                //Step 3.) Add back onto stack
+                stack.push(new HuffmanTree(leftItem, rightItem, nonLeaf));
+                //System.out.println("Tree String: " + stack.peek());
+            } else {
+                stack.push(new HuffmanTree(arr[i]));
+            }
+        }
+        root = current = stack.pop().root;
     } 
     public HuffmanTree(HuffmanTree b1, HuffmanTree b2, char d) { 
     //merge b1 and b2 
-        //Create a new single node tree to connect to
-       // HuffmanTree parent = new HuffmanTree(d);
-       root = current = new Node(b1.root, d, b2.root);
         //Point the two other trees to the root of the new tree
-        //parent.root.left = b1.root;
-        //parent.root.right = b2.root;
+        root = current = new Node(b1.root, d, b2.root);
     } 
     
     //The following methods allow a user object to follow a path in the tree. 
