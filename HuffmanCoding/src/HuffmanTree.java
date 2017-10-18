@@ -12,9 +12,6 @@ public class HuffmanTree {
             right = R; 
         }
         public String toString() {
-//            if(data == '') {
-//                return "Data is null. :(";
-//            }
             return "Data: " + data;
         }
     } 
@@ -84,7 +81,7 @@ public class HuffmanTree {
         current = current.right;
     } 
     public boolean atLeaf() {
-        return current.left == null && current.right == null;
+        return current.left == null;
     } 
     public char current() {
         return current.data; 
@@ -113,7 +110,7 @@ public class HuffmanTree {
         }
         
         private void makePath(Node r, String path) {
-            if(r.left == null && r.right == null) {
+            if(r.left == null) {
                 paths.add(r.data + path);
                 return;
             }

@@ -13,7 +13,7 @@ public class HuffmanInputStream extends BitInputStream {
             tree = d.readUTF(); 
             totalChars = d.readInt(); 
         }catch (IOException e){
-           
+           //Do Nothing
         }
         currentByte = 0;
         bitCount = 0;
@@ -22,31 +22,30 @@ public class HuffmanInputStream extends BitInputStream {
      @Override
      public int readBit() {
          if(currentByte == -1) {
-             try {
-                d.close();
-            } catch (IOException e) {
-            }
+             close();
              return -1;
              //I'm Done!
          }
          
-         int result = currentByte % 2;
+         //Logic to get bits
+         int bit = currentByte % 2;
          currentByte /= 2;
+         
          bitCount++;
          if(bitCount == 8) {
              //Get the next byte to process
              getByte();
          }
-         return result;
+         return bit;
      }
      
      private void getByte() {
          try {
             currentByte = d.readUnsignedByte();
-        } catch (IOException e) {
+         } catch (IOException e) {
             //Do Nothing
-        }
-        bitCount = 0;
+         }
+         bitCount = 0;
      }
      
      public String getTree() {

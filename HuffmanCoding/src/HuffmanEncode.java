@@ -48,7 +48,7 @@ public class HuffmanEncode {
         int[] arr = new int[128];
         
         try {
-            reader = new BufferedReader(new FileReader(new File(in)));
+            reader = new BufferedReader(new FileReader(in));
             
             int c = 0;
             while((c = reader.read()) != -1) {
@@ -93,10 +93,8 @@ public class HuffmanEncode {
             Item rightItem = queue.poll();
             
             //Step 2.) Merge the trees
-            HuffmanTree mergedTree = new HuffmanTree(leftItem.data, rightItem.data, (char)128);
-            
             //Step 3.) Create new Item and add freq
-            Item mergedItem = new Item(leftItem.freq + rightItem.freq, mergedTree);
+            Item mergedItem = new Item(leftItem.freq + rightItem.freq, new HuffmanTree(leftItem.data, rightItem.data, (char)128));
             
             //Step 4.) Add back to queue
             queue.add(mergedItem);
@@ -112,6 +110,7 @@ public class HuffmanEncode {
        HuffmanTree tree = queue.poll().data;
        Iterator<String> iter = tree.iterator();
        
+       //Iterate through all the encodings and add to my "hash"
        while(iter.hasNext()) {
            String str = iter.next();
            arr[str.charAt(0)] = str.substring(1);
@@ -124,6 +123,7 @@ public class HuffmanEncode {
            
            int c = 0;
            while((c = reader.read()) != -1) {
+               //Write the encodings out 1 bit at a time
                for(int i = 0; i < arr[c].length(); i++) {
                    writer.writeBit(Integer.parseInt(arr[c].substring(i,i+1)));
                }
@@ -131,10 +131,9 @@ public class HuffmanEncode {
            writer.close();
            reader.close();
        } catch (IOException e) {
-           
+           //Do Nothing
        }
        
-       
-    }
-    
+    } //End writeTree
+   
 }

@@ -6,7 +6,6 @@ public class HuffmanDecode {
     //Implements the huffman decoding algorithm 
     //Add  private methods as needed
        try {
-           //System.out.println("Converting file!");
            convertFile(in,out);
        } catch (FileNotFoundException e) {
            System.out.println("File not found!");
@@ -19,15 +18,15 @@ public class HuffmanDecode {
         //Tree built from string encoding
         HuffmanTree tree = new HuffmanTree(reader.getTree(),(char)128);
         int charsRead = 0;
-        
+        int bit = -1;
         //While not at the end of the file
         while(charsRead != reader.totalChars()){
             //If not a leaf continue looking left or right
             if(!tree.atLeaf()) {
-                int bit = reader.readBit();
+                bit = reader.readBit();
                 if (bit == 0) {
                     tree.moveLeft();
-                }else if (bit == 1) {
+                } else {
                     tree.moveRight();
                 }
             } else {
