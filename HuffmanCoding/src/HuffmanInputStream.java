@@ -6,8 +6,6 @@ public class HuffmanInputStream extends BitInputStream {
     private int totalChars;
     private int currentByte;
     private int bitCount;
-    private int totalCharsUsed;
-    
     
     public HuffmanInputStream(String filename) { 
         super(filename); 
@@ -19,7 +17,7 @@ public class HuffmanInputStream extends BitInputStream {
         }
         currentByte = 0;
         bitCount = 0;
-        nextByte();
+        getByte();
      }
      @Override
      public int readBit() {
@@ -33,25 +31,21 @@ public class HuffmanInputStream extends BitInputStream {
          }
          
          int result = currentByte % 2;
-         System.out.print("result = " +  result);
-         System.out.printf(" : CurrentByte = %d : %d \n",currentByte,currentByte/2 );
          currentByte /= 2;
          bitCount++;
          if(bitCount == 8) {
              //Get the next byte to process
-             nextByte();
+             getByte();
          }
          return result;
      }
      
-     private void nextByte() {
-         System.out.println("reading the nextByte");
+     private void getByte() {
          try {
             currentByte = d.readUnsignedByte();
         } catch (IOException e) {
             //Do Nothing
         }
-         System.out.println("New byte = " + currentByte);
         bitCount = 0;
      }
      

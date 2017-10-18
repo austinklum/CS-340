@@ -35,7 +35,8 @@ public class HuffmanTree {
     //Assumes t represents a post order representation of the tree  
     //where a node is either a leaf or has two children. nonLeaf  
     //is the char value of the data in the non-leaf nodes 
-        /* HOW TO BUILD A TREE FROM A STRING
+        /* 
+         * HOW TO BUILD A TREE FROM A STRING
          * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
          * 1.) Pop off 2 items whenever a nonleaf is seen
          * 2.) Merge the two together
@@ -47,21 +48,19 @@ public class HuffmanTree {
         Stack<HuffmanTree> stack = new Stack<>();
         
         for(int i = 0; i < arr.length; i++) {
-            //System.out.println(arr[i]);
-            //System.out.println("Blew up?");
             //Step 1.) pop off 2 items upon seeing a nonleaf
             if (arr[i] == nonLeaf) {
                 //Get poppin!
                 HuffmanTree rightItem = stack.pop();
                 HuffmanTree leftItem = stack.pop();
-               // System.out.println("Left Item = " + leftItem + "Right Item = " + rightItem);
+                
                 //Step 2.) Merge the two
                 //Step 3.) Add back onto stack
                 stack.push(new HuffmanTree(leftItem, rightItem, nonLeaf));
-                //System.out.println("Tree String: " + stack.peek());
             } else {
                 stack.push(new HuffmanTree(arr[i]));
             }
+            //Step 4.) Repeat until at the end of string input
         }
         root = current = stack.pop().root;
     } 
@@ -114,15 +113,11 @@ public class HuffmanTree {
         }
         
         private void makePath(Node r, String path) {
-            System.out.println("R is : " + r);
             if(r.left == null && r.right == null) {
-                System.out.println("inside base case");
                 paths.add(r.data + path);
                 return;
             }
-            System.out.println("Going left!");
             makePath(r.left, path + "0");
-            System.out.println("Going right!");
             makePath(r.right, path + "1");
         }
     } 

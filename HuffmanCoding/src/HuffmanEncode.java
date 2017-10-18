@@ -57,9 +57,9 @@ public class HuffmanEncode {
             }
             
             /* Prints out my array freqs.*/
-             for(int i = 0; i < arr.length; i++) {
+           /*  for(int i = 0; i < arr.length; i++) {
                 System.out.printf( "%3d Index: %c : %4d\n",i,(char)i, arr[i]);
-            }
+            }*/
             for(int i = 0; i < arr.length; i++) {
                 //Create priority queue of single huffman trees.
                 if(arr[i] != 0) {
