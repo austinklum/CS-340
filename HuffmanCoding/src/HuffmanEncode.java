@@ -92,8 +92,6 @@ public class HuffmanEncode {
             Item leftItem = queue.poll();
             Item rightItem = queue.poll();
             
-            System.out.println("LeftItem = " + leftItem + " | RightItem = " + rightItem);
-            
             //Step 2.) Merge the trees
             HuffmanTree mergedTree = new HuffmanTree(leftItem.data, rightItem.data, (char)128);
             
@@ -104,7 +102,6 @@ public class HuffmanEncode {
             queue.add(mergedItem);
         }
         //Step 5.) Repeat
-        System.out.println(queue);
     }
     
    private void writeTree(String in, String out) {
@@ -117,7 +114,6 @@ public class HuffmanEncode {
        
        while(iter.hasNext()) {
            String str = iter.next();
-           System.out.println(str);
            arr[str.charAt(0)] = str.substring(1);
        }
        
@@ -129,10 +125,8 @@ public class HuffmanEncode {
            int c = 0;
            while((c = reader.read()) != -1) {
                for(int i = 0; i < arr[c].length(); i++) {
-                   System.out.print(Integer.parseInt(arr[c].substring(i,i+1)));
                    writer.writeBit(Integer.parseInt(arr[c].substring(i,i+1)));
                }
-               System.out.println();
            }
            writer.close();
            reader.close();

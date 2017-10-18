@@ -19,28 +19,29 @@ public class HuffmanDecode {
         HuffmanInputStream reader = new HuffmanInputStream(in);
         HuffmanTree tree = new HuffmanTree(reader.getTree(),(char)128);
         PrintWriter writer = new PrintWriter(out);
-        System.out.println(out);
+        PrintWriter log = new PrintWriter("log.txt");
+        //System.out.println(out);
         int charsRead = 0;
         
         while(charsRead != reader.totalChars()){
-            int c = reader.readBit();
-            System.out.println("Read a bit called: " + c);
             if(!tree.atLeaf()) {
-                //System.out.println("Not at leaf!");
-                if (c == 0) {
-                   // System.out.println("Going left!");
+                int bit = reader.readBit();
+                log.print("Read a bit called: " + bit + "\n");
+                log.println("Not at leaf!");
+                if (bit == 0) {
+                   log.println("Going left!");
                     tree.moveLeft();
-                }else if (c == 1) {
-                    //System.out.println("Going right");
+                }else if (bit == 1) {
+                    log.println("Going right");
                     tree.moveRight();
                 }
             } else {
-                System.out.println("Chars Read = " + charsRead);
-                System.out.println("Im at a leaf! Write and move root. : " + tree.current());
+                log.print("Chars Read = " + charsRead + "\n");
+                log.print("  Im at a leaf! Write and move root. : " + tree.current() + "\n");
                 //Write the char out
                 charsRead++;
                 writer.write(tree.current());
-                tree.moveRoot();  
+                tree.moveRoot(); 
             }
         }
         writer.close();

@@ -31,8 +31,12 @@ public class HuffmanInputStream extends BitInputStream {
              return -1;
              //I'm Done!
          }
+         
          int result = currentByte % 2;
+         System.out.print("result = " +  result);
+         System.out.printf(" : CurrentByte = %d : %d \n",currentByte,currentByte/2 );
          currentByte /= 2;
+         bitCount++;
          if(bitCount == 8) {
              //Get the next byte to process
              nextByte();
@@ -41,11 +45,13 @@ public class HuffmanInputStream extends BitInputStream {
      }
      
      private void nextByte() {
+         System.out.println("reading the nextByte");
          try {
             currentByte = d.readUnsignedByte();
         } catch (IOException e) {
             //Do Nothing
         }
+         System.out.println("New byte = " + currentByte);
         bitCount = 0;
      }
      
