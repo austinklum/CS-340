@@ -11,6 +11,15 @@ public class HuffmanDecode {
            System.out.println("File not found!");
        }
     } 
+    /**
+     *  Reads from in file and creates a tree from the string representation.
+     *  Uses the tree to read bits from encoded in file and find the proper value to decode to. 
+     *  Writes out the decoding to the out file. 
+     * 
+     * @param in Encoded file to decode
+     * @param out File to store the decoded file
+     * @throws FileNotFoundException
+     */
     private void convertFile(String in, String out) throws FileNotFoundException{
         HuffmanInputStream reader = new HuffmanInputStream(in);
         PrintWriter writer = new PrintWriter(out);
@@ -30,7 +39,7 @@ public class HuffmanDecode {
                     tree.moveRight();
                 }
             } else {
-                //Write the char out
+                //Write the char out and return to root
                 charsRead++;
                 writer.write(tree.current());
                 tree.moveRoot(); 

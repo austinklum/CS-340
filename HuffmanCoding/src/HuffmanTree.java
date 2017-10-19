@@ -41,6 +41,7 @@ public class HuffmanTree {
          * 4.) Repeat until all values in string rep is used.
          */
         
+        //Populate with tree string split up into chars
         char arr[] = t.toCharArray();
         Stack<HuffmanTree> stack = new Stack<>();
         

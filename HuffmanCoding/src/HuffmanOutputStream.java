@@ -46,7 +46,7 @@ public class HuffmanOutputStream extends BitOutputStream {
         if(bitCount > 0) {
             flush();
         }
-        //When we close it should flush out rest w
+        //When we close it should flush out rest
         try {
             d.close();
         } catch (IOException e) {

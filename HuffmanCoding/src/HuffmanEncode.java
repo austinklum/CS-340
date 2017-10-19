@@ -38,12 +38,18 @@ public class HuffmanEncode {
     //Add  private methods as needed
         queue = new PriorityQueue<>(128);
         totalChars = 0;
+        //Reads the file and gets freq
+        
         readFile(in);
         buildTree();
-        writeTree(in, out);
+        writeFile(in, out);
     } 
-
+    /**
+     * Reads the file and puts Items into the queue as single node huffman trees with a freq
+     * @param in File to encode
+     */
     private void readFile(String in) {
+        //Must be initialized if I want to close it
         BufferedReader reader = null;
         int[] arr = new int[128];
         
@@ -51,6 +57,7 @@ public class HuffmanEncode {
             reader = new BufferedReader(new FileReader(in));
             
             int c = 0;
+            //Create the freq array with a key of the ASCII encoding and value of frequency count
             while((c = reader.read()) != -1) {
                 totalChars++;
                 arr[c]++;
@@ -60,6 +67,7 @@ public class HuffmanEncode {
            /*  for(int i = 0; i < arr.length; i++) {
                 System.out.printf( "%3d Index: %c : %4d\n",i,(char)i, arr[i]);
             }*/
+            
             for(int i = 0; i < arr.length; i++) {
                 //Create priority queue of single huffman trees.
                 if(arr[i] != 0) {
@@ -77,7 +85,10 @@ public class HuffmanEncode {
             }
         }
     }
-    
+    /**
+     * PRE Queue of single node huffman Trees
+     * POST Queue will contain a single huffman tree with all the single nodes merged with lowest freq chars at the bottom of the tree
+     */
     private void buildTree() {
     /* HOW TO BUILD A TREE
      * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -101,8 +112,14 @@ public class HuffmanEncode {
         }
         //Step 5.) Repeat
     }
-    
-   private void writeTree(String in, String out) {
+   /**
+    * Writes out the string representation of the tree and the string encodings. 
+    * Encodes the in file to the out file 
+    * 
+    * @param in File to be encoded
+    * @param out File to write encodings to
+    */
+   private void writeFile(String in, String out) {
        //arr will be my "hash map" for the encodings 
        //KEY: ASCII value char VALUE: Encoding path from iterator
        String[] arr = new String[128];
@@ -134,6 +151,6 @@ public class HuffmanEncode {
            //Do Nothing
        }
        
-    } //End writeTree
+    } //End writeFile
    
 }
