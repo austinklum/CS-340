@@ -1,6 +1,5 @@
 import java.io.*; 
-import java.util.*; 
-
+ 
 public class HuffmanDecode { 
     public HuffmanDecode(String in, String out) { 
     //Implements the huffman decoding algorithm 
