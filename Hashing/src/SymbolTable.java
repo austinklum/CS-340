@@ -1,6 +1,5 @@
 import java.util.*;
 
-import javax.security.auth.kerberos.KerberosKey;
 public class SymbolTable implements Iterable<String> {
     private class Node {
     //a node used to build linked lists
@@ -39,8 +38,13 @@ public class SymbolTable implements Iterable<String> {
         if (!inTable) {
             // head = table[hashValue];
             //Add to Head of linked list.
-          Node n = new Node(k, null, table[hash(k)]);
-           table[hash(k)] = n;
+            if(table[hash(k)] == null) {
+                //There is no head
+                table[hash(k)] = new Node(k,null,null);
+            }else {
+                //Append after head
+                table[hash(k)] = new Node(k, null, table[hash(k)].next);
+            }
         }
         return inTable;
     }
@@ -52,9 +56,6 @@ public class SymbolTable implements Iterable<String> {
             return false;
         }
         System.out.println("Head is something find if it's not null");
-        Node thing = findAux(k);
-        System.out.println("auxVal in find : " + thing.key);
-        System.out.println("Did findAux find something in find()? : " + thing != null);
         return findAux(k) != null;
     }
     
@@ -78,7 +79,7 @@ public class SymbolTable implements Iterable<String> {
             }
             temp = temp.next;
         }
-        System.out.println("Returning from aux : " + temp.key);
+        //System.out.println("Returning from aux : " + temp.key);
         return temp;
     }
     public Object getData(String k) { 
@@ -148,19 +149,19 @@ public class SymbolTable implements Iterable<String> {
     public class STIterator implements Iterator<String> { 
         //An iterator that iterates through the keys in the table
         private Node indexNode;
-        private int nextIndex;
+        private int pos;
         
         public STIterator() {
             //Needs to loop through each entry in the table.
             //Every entry may have more than 1 value, so loop through them 1 at a time
-            nextIndex = 0;
-            indexNode = table[nextIndex];
-            nextIndex++;
+            pos = 0;
+            indexNode = table[pos];
+            pos++;
            // System.out.println("I was made!");
         } 
         public boolean hasNext() {
             //System.out.println("HasNext() = " + nextIndex);
-            return nextIndex < table.length;
+            return pos < table.length;
 
         }
         public boolean hasNextNode() {
@@ -174,9 +175,9 @@ public class SymbolTable implements Iterable<String> {
             /*If I am at the end of a list of a specific row in the table.
               Go to the next row in the table */
             //While I dont have a next node look at the next table index
-            while ((!hasNextNode() && nextIndex <= table.length)/* || indexNode.data != null*/) {
-                indexNode = table[nextIndex];
-                nextIndex++;
+            while ((!hasNextNode() && pos < table.length)/* || indexNode.data != null*/) {
+                indexNode = table[pos];
+                pos++;
                 if(indexNode != null) {
                     break;
                 }
@@ -185,7 +186,8 @@ public class SymbolTable implements Iterable<String> {
 //                    nextIndex = table.length + 1;
 //                }
             }
-            
+            boolean whatIndexNode = indexNode == null;
+            System.out.println("My index node is " + whatIndexNode);
             Node retVal = indexNode;
             indexNode = indexNode.next;
 
@@ -202,7 +204,7 @@ public class SymbolTable implements Iterable<String> {
     } 
     public static void main(String args[]) { 
     //code to test SymbolTable 
-        SymbolTable myTable = new SymbolTable(5);
+        SymbolTable myTable = new SymbolTable(2);
         myTable.insert("1");
         myTable.setValue("1", "The first thing");
         myTable.insert("achoo");
