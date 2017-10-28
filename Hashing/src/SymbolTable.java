@@ -1,5 +1,5 @@
 import java.util.*;
-public class SymbolTable implements Iterable{
+public class SymbolTable implements Iterable<String>{
     private class Node {
     //a node used to build linked lists
     //do not use the Java LinkedList class
@@ -48,10 +48,13 @@ public class SymbolTable implements Iterable{
     public boolean find(String k) {
     //return true if k is in the table otherwise return false 
         //Check if it entry is null. If null then return false
-        if(table[hash(k)] == null)
-            return false;
-        //If the entry is something, look at everything in the list
-        return findAux(k) != null;
+//        if(table[hash(k)] == null)
+//            return false;
+//        //If the entry is something, look at everything in the list
+//        return findAux(k) != null;
+        
+        return table[hash(k)] == null ? false : findAux(k) != null;
+        
     }
     
     private Node findAux(String k) {
@@ -128,7 +131,7 @@ public class SymbolTable implements Iterable{
                 indexNode = table[index];
                 index++;
             }
-            if(indexNode == null)
+            if (indexNode == null)
                 return "";
             
             Node retVal = indexNode;
@@ -162,10 +165,16 @@ public class SymbolTable implements Iterable{
 //            System.out.println(string);
 //        }
         Iterator<String> iter = myTable.iterator();
-        System.out.println("Printing table...");
-        while(iter.hasNext()) {
-            String str = iter.next();
+        System.out.println("Printing table...\n");
+        for(String str : myTable){
             System.out.println(str);
         }
+        
+        myTable.remove("c");
+        System.out.println("\nPrinting table after removing c:cats\n");
+        for (String string : myTable) {
+            System.out.println(string);
+        }
+        
     }
 }
