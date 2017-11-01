@@ -117,9 +117,23 @@ public class ExpressionTree {
     private int evaluate(SymbolTable t,Node r) {
     //return the int value of the expression tree with root r 
     //t is used to lookup values of variables 
-        return -1; 
-        
+        //If its a number
+        if (isNumeric(r.data)) {
+            return Integer.parseInt(r.data);
+        //If its a variable from the table
+        } else if (t.find(r.data)) {
+            return Integer.parseInt(t.getData(r.data).toString());
+        //Uninitalized variable
+        } else if(!isOperator(r.data.charAt(0))){
+            return 0;
+        } else {
+            //Must be an Operator
+            return doOp(r.data, evaluate(t, r.left), evaluate(t, r.right));
+        }
     }
+    //if is digit return value
+    //if is varible return value from symbol table
+    //else is operator return doOperator(r.data,r.left,r.right)
     
     public String toString() {
         return toPostfix();
@@ -249,11 +263,40 @@ public class ExpressionTree {
         }
     }
     
+    public boolean isNumeric(String str){
+      return str.matches("-?\\d+(\\.\\d+)?");
+    }
+    
+    private int doOp(String op, int left, int right) {
+        switch(op.charAt(0)){
+            case '+':
+                return left + right;
+            case '-':
+                return left - right;
+            case '*':
+                return left * right;
+            case '/':
+                return left / right;
+            case '%':
+                return left % right;
+            case '^':
+                return (int)Math.pow(left, right);
+            case '!':
+                return right * -1;
+                
+        }
+        return 0;
+    }
+    
     public static void main(String args[]){ 
     //used to test expression tree 
-        ExpressionTree t = new ExpressionTree("! A + B * C ^ ! ( D - E ) ^ F + H / I");
-        System.out.println(t.toPostfix());
-        System.out.println(t.toInfix());
+//        ExpressionTree t = new ExpressionTree("! A + B * C ^ ! ( D - E ) ^ F + H / I");
+//        System.out.println(t.toPostfix());
+//        System.out.println(t.toInfix());
+//        SymbolTable st = new SymbolTable(5);
+//        ExpressionTree t = new ExpressionTree("A + 1");
+//        System.out.println(t);
+//        System.out.println(t.evaluate(st));
     } 
     
 }
