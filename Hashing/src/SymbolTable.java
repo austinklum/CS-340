@@ -19,11 +19,12 @@ public class SymbolTable implements Iterable<String>{
         table = new Node[s];
     }
     private int hash(String k) {
-    //return the hash funcTIon value for k 
+    //return the hash function value for k 
         int h = 0;
         for(int i = 0; i < k.length(); i++) {
             h = h*31+k.charAt(i);
         }
+        /*Integer overflow*/
         if (h < 0) {
             h *= -1;
         }
@@ -48,15 +49,15 @@ public class SymbolTable implements Iterable<String>{
     public boolean find(String k) {
     //return true if k is in the table otherwise return false 
         //Check if it entry is null. If null then return false
-//        if(table[hash(k)] == null)
-//            return false;
-//        //If the entry is something, look at everything in the list
-//        return findAux(k) != null;
-        
+        //If the entry is something, look at everything in the list
         return table[hash(k)] == null ? false : findAux(k) != null;
         
     }
-    
+    /**
+     * Used to find a node in the table
+     * @param k key
+     * @return Node value from key k
+     */
     private Node findAux(String k) {
         Node temp = table[hash(k)];
         //Loop until we hit the end or find the key
@@ -127,16 +128,21 @@ public class SymbolTable implements Iterable<String>{
         //The format of the String should be key:data where key is a key in the 
         //symbol table and data is the String representatIon of the data associated 
         //with the key 
+            
+            //Logic to skip nulls and look at next valid index in table
             while(indexNode == null && hasNext()) {
                 indexNode = table[index];
                 index++;
             }
+            //If we are at the end of the list
             if (indexNode == null)
                 return "";
             
+            //Make progress
             Node retVal = indexNode;
             indexNode = indexNode.next;
             
+            //Ouput values
             return retVal.key + ":" + retVal.data.toString();
         } 
         public void remove() {
@@ -161,10 +167,6 @@ public class SymbolTable implements Iterable<String>{
         myTable.insert("c");
         myTable.setValue("c", "cats");
         
-//        for (String string : myTable) {
-//            System.out.println(string);
-//        }
-        Iterator<String> iter = myTable.iterator();
         System.out.println("Printing table...\n");
         for(String str : myTable){
             System.out.println(str);

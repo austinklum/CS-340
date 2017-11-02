@@ -10,15 +10,19 @@ public class Assignments {
         SymbolTable hash = new SymbolTable(10);
         String line = "";
         
+        //Loop through the lines
         while ((line = reader.readLine()) != null) {
             String[] str = line.split(" = ");
             hash.insert(str[0]);
+            //Add to hash and evaluate
             hash.setValue(str[0], new ExpressionTree(str[1]).evaluate(hash));
         }
         
+        //Output results
         for (String string : hash) {
             System.out.println(string);
         }
         
+        reader.close();
     }
 }

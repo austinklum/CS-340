@@ -16,10 +16,6 @@ public class ExpressionTree {
     } 
     private Node root;
     
-    private ExpressionTree(ExpressionTree leftItem,String token, ExpressionTree rightItem) {
-        root = new Node(leftItem.root, token, rightItem.root);
-    }
-    
     private ExpressionTree(Node r) {
         root = r;
     }
@@ -62,28 +58,26 @@ public class ExpressionTree {
         boolean sawParen = false;
         //Loop through everything
         for (String item: exp.split(" ")) {
-            if(item.equals("+")) {
-                System.out.println("What now!");
-            }
-            System.out.println("Operators: " + operators);
-            System.out.println("Operands: " + operands + "\n");
+//            System.out.println("Operators: " + operators);
+//            System.out.println("Operands: " + operands + "\n");
             sawParen = false;
             if(isOperator(item.charAt(0))) {
                 //Operator stack is empty or the thing being pushed on has greater precedence
-                if(operators.isEmpty() || operands.isEmpty() || shouldPush(operators.peek(),item)){
+                if(operators.isEmpty() || shouldPush(operators.peek(),item)){
                     operators.push(item);
                 //Thing being pushed on has lesser precendence
                 } else {
+                    // While there is enough stuff on stack and should keep popping
                     while(hasEnough(operators,operands) && !shouldPush(operators.peek(),item) && !sawParen) {
-                        System.out.println("IN WHILE: Operators: " + operators);
-                        System.out.println("IN WHILE: Operands: " + operands + "\n");
-                        if(operators.size() < 2) {
-                            System.out.println("DEBUG");
+//                        System.out.println("IN WHILE: Operators: " + operators);
+//                        System.out.println("IN WHILE: Operands: " + operands + "\n");
+
+                        if(item.charAt(0) == ')') { 
+                            sawParen = true; 
                         }
-                        if(item.charAt(0) == ')')
-                            sawParen = true;
                         pop(operators,operands,sawParen);
                     }
+                    //Dont push on a )
                     if(!sawParen) {
                         operators.push(item);
                     }
@@ -93,13 +87,10 @@ public class ExpressionTree {
                 operands.push(new ExpressionTree(new Node(null,item,null)));
             }
         }
-        
-        //Empty Operator stack
+        sawParen = false;
+        //Empty the Operator stack
         while(!operators.isEmpty()) {
-            if(operators.peek().charAt(0) == ')')
-                sawParen = true;
             pop(operators, operands, sawParen);
-            sawParen = false;
         }
         
         //Use that tree to query postfix and infix
@@ -117,18 +108,21 @@ public class ExpressionTree {
     private int evaluate(SymbolTable t,Node r) {
     //return the int value of the expression tree with root r 
     //t is used to lookup values of variables 
+        if(r == null) {
+            return 0;
+        }
         //If its a number
-        if (isNumeric(r.data)) {
+            if (isNumeric(r.data)) {
             return Integer.parseInt(r.data);
         //If its a variable from the table
         } else if (t.find(r.data)) {
             return Integer.parseInt(t.getData(r.data).toString());
-        //Uninitalized variable
-        } else if(!isOperator(r.data.charAt(0))){
-            return 0;
-        } else {
+        } else if(isOperator(r.data.charAt(0))){
             //Must be an Operator
             return doOp(r.data, evaluate(t, r.left), evaluate(t, r.right));
+        //Uninitalized variable
+        } else {
+            return 0;
         }
     }
     //if is digit return value
@@ -173,6 +167,12 @@ public class ExpressionTree {
                c == '!' || c == '(' || c == ')';
     }
     
+    /**
+     * Tells the user weather or not to push
+     * @param op top of stack
+     * @param str character trying to push
+     * @return if pushing is okay
+     */
     private boolean shouldPush(String op, String str) {
         char newChar = str.charAt(0);
         int peek = getLevel(op);
@@ -182,13 +182,10 @@ public class ExpressionTree {
             peek = 0;
         }
         int c = getLevel(str);
-        if(c == 3) {
-            System.out.println("Hold up");
-        }
         //If next thing is greater value
         if(peek < c) {
             return true;
-        //If next thing is a 
+        //If next thing is a ! or ^
         } else if (peek == c && (newChar == '!' || newChar == '^')) {
                 return true;
         }
@@ -199,7 +196,11 @@ public class ExpressionTree {
     private int getLevel(String str) {
         return getLevel(str.charAt(0));
     }
-    
+    /**
+     * Gets the precendence level of given char
+     * @param c character to check
+     * @return level
+     */
     private int getLevel(char c) {
         switch(c) {
             case '+':
@@ -224,13 +225,16 @@ public class ExpressionTree {
     /**
      * Logic to deal when encountering a operator of lesser precendence 
      * Pops 2 operands and 1 operator; Merges them and puts it back onto operands stack.
+     * If a ! pops 1 operand and 1 operator; Merges them with data being stored on right child
      * @param operators
      * @param operands
+     * @param sawParen Used to loop until seeing a opening '('
      */
     private void pop(Stack<String> operators, Stack<ExpressionTree> operands, boolean sawParen) {
         do {
             String operator = operators.pop();
             
+            //Stop looping if we see a '('
             if(operator.charAt(0) == '(')
                 return;
             
@@ -243,15 +247,22 @@ public class ExpressionTree {
                 leftItem = operands.pop();
             }
             //Put the merged tree back onto the operands stack
+            //Standard case
             if(leftItem != null) {
                 operands.push(new ExpressionTree(new Node(leftItem.root, operator, rightItem.root)));
+            // it must be a ! case   
             } else {
                 operands.push(new ExpressionTree(new Node(null, operator, rightItem.root)));
             }
         } while (sawParen);
         
     }
-    
+    /**
+     * Returns if there is enough stuff on the stack to pop off of
+     * @param operators
+     * @param operands
+     * @return 
+     */
     private boolean hasEnough(Stack<String> operators, Stack<ExpressionTree> operands) {
         if(operands.isEmpty() || operators.isEmpty()) {
             return false;
@@ -262,11 +273,21 @@ public class ExpressionTree {
             return operands.size() >= 2;
         }
     }
-    
-    public boolean isNumeric(String str){
+    /**
+     * Used to test if string of characters are numeric
+     * @param str
+     * @return if string is numeric
+     */
+    private boolean isNumeric(String str){
       return str.matches("-?\\d+(\\.\\d+)?");
     }
-    
+    /**
+     * Used to do the operation in evaluation
+     * @param op operator 
+     * @param left left hand side of operation
+     * @param right right hand side op operation
+     * @return calculated operation from left, operator, right
+     */
     private int doOp(String op, int left, int right) {
         switch(op.charAt(0)){
             case '+':
@@ -283,7 +304,6 @@ public class ExpressionTree {
                 return (int)Math.pow(left, right);
             case '!':
                 return right * -1;
-                
         }
         return 0;
     }
