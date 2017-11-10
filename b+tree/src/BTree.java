@@ -1,5 +1,7 @@
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Stack;
 
@@ -9,103 +11,63 @@ int order;
 int blockSize; 
 long root; 
 long free;
-Stack<Long> paths;
+Stack<BTreeNode> paths;
 //add instance variables as needed. 
 private class BTreeNode { 
    private int count;
    private int keys[]; 
-   private long children[]; 
+   private long children[];
+   private long addr;
    //constructors and other method 
-   private BTreeNode(int c, int k[], long childs[]) {
-       count = c;
-       keys = k;
-       children = childs;
+   private BTreeNode(int c, int k[], long childs[], long addr) {
+       count     = c;
+       keys      = k;
+       children  = childs;
+       this.addr = addr;
    }
    /**
     * Reads a single node from the file
     * @param addr address of node
     */
-   private BTreeNode (Long addr) {
-       //If its not a child it has 1 more than the count
-       //
+   private BTreeNode (long addr) {
        try {
            f.seek(addr);
+           this.addr = addr;
            count = f.readInt();
-           for(int i = 0; i < Math.abs(count); i++) {
+           for (int i = 0; i < order; i++) {
                keys[i] = f.readInt();
            }
            
-           //Start reading the children
-           f.seek(getFirstChild(addr)); 
-           int i = 0;
-           for (i = 0; i < Math.abs(count); i++ ) {
+           for (int i = 0; i < order; i++) {
                children[i] = f.readLong();
            }
            
-           //Its a leaf
-           if (count < 0) {
-               //Then read the last addr
-               f.seek(getLastChild(addr));
-               children[i] = f.readLong();
-           } else {
-           //Its not a leaf
-               //Then read the next addr
-               children[i] = f.readLong();
-           }
        } catch (IOException e) {
            e.printStackTrace();
        }
    }
    
-   private void writeNode(long addr) {
-       //Writes the node to the file at location addr
+   /**
+    *  //Writes the node to the file at location addr
+    * @param addr address of node in file
+    */
+   private void writeNode() {
        try {
            f.seek(addr);
+           
            f.writeInt(count);
-           int i = 0;
            //Write out the keys
-           for(i = 0; i < Math.abs(count); i++) {
+           for(int i = 0; i < order; i++) {
                f.writeInt(keys[i]);
            }
-           //Go to start of children and write them out
-           f.seek(getFirstChild(addr));
-           for(i = 0; i < Math.abs(count); i++) {
-               f.writeLong(children[i]);
-           }
-           
-           //If a leaf, write out at the end
-           if(count < 0) {
-               f.seek(getLastChild(addr));
-               f.writeLong(children[i]);
-          //Else its not a leaf, write it out in the next position.
-           } else {
+           //Write out the children
+           for(int i = 0; i < order; i++) {
                f.writeLong(children[i]);
            }
        } catch (IOException e) {
-           // TODO Auto-generated catch block
            e.printStackTrace();
        }
-   }
-   /**
-    * Returns the last child address
-    * @param addr start of node address
-    * @return last child address
-    */
-   private long getLastChild(long addr) {
-       //Start at the node, Go past the keys, Go past all but 1 child
-       return addr + (order * 4) + (order * 7);
-   }
-   
-   /**
-    * Returns the start of children addresses
-    * @param addr start of node address
-    * @return first child address
-    */
-   private long getFirstChild(long addr) {
-       //Start at the node, Go past the keys
-       return addr + (order * 4);
-   }
-   
+   } 
    private boolean isLeaf() {
        return count < 0;
    }
@@ -158,6 +120,33 @@ public BTree(String filename) {
        return true if the key is added 
        return false if the key is a duplicate 
     */ 
+        boolean inTable = -1 != search(key);
+        boolean split = false;
+        if(!inTable) {
+            //Do Insert
+            BTreeNode r = paths.pop();
+            
+            //If there is room in node for new value: M-1 children
+            if (Math.abs(r.count) < order - 1) {
+                //Insert k into the node
+                insertKey(r,key,addr);
+                //Write node to the file
+                r.writeNode();
+            } else {
+                BTreeNode splitNode = new BTreeNode(r.count, Arrays.copyOf(r.keys, r.keys.length+1),Arrays.copyOf(r.children, r.children.length+1), r.addr);
+               insertKey(splitNode,key,addr);
+                //let  newnode be  a  new B+tree  Node
+                BTreeNode newNode = new BTreeNode(splitNode.keys.length/2,)
+                //split   the values  (including  k)  between node  and the newnode
+                //let val be  the smallest    value   in  the newnode
+                //write   node    to  the file    (into   the same    loca?on where   is  was previously  located)    
+                //write   newnode into    the file    
+                //let loc be  the address in  the file    of  newnode
+                //set split   to  true 
+            }
+        }
+        
+        return inTable;
     } 
     public long remove(int key) { 
     /* 
@@ -173,9 +162,9 @@ public BTree(String filename) {
        otherwise return 0  
     */ 
         int i = 0;
-        paths.push(root);
-        BTreeNode r = new BTreeNode(root);
         
+        BTreeNode r = new BTreeNode(root);
+        paths.push(r);
         while(k != r.keys[i] && !r.isLeaf()) {
             //Look at in index leaves to guide where to go
             for(i = 0; i < Math.abs(r.count); i++) {
@@ -185,12 +174,12 @@ public BTree(String filename) {
                 }
                 //We looked at all the keys and are at a leaf, k is not there.
                 if (i > Math.abs(r.count) && r.isLeaf()) {
-                    return 0;
+                    return -1;
                 }
             }
             //Add to the paths the address we are going to look at
-            paths.push(r.children[i]);
             r = new BTreeNode(r.children[i]);
+            paths.push(r);
         }
         //We stopped looping that must mean we found the value
         return r.children[i];
@@ -202,6 +191,36 @@ public BTree(String filename) {
        return a list of row addresses for all keys in the range low to high inclusive 
        return an empty list when no keys are in the range 
     */ 
+    }
+    /**
+     * <pre>PRE: There is room for the new key and child.
+     * POST: New key and child are inserted and ordering is maintained.</pre>
+     * Inserts and maintains a new key and child into asc order
+     * 
+     * @param r Node to add to
+     * @param k Key to add
+     * @param addr Address of child
+     */
+    private void insertKey(BTreeNode r, int k, long addr) {
+        int i = Math.abs(r.count);
+        while(i >= 0 && k < r.keys[i]) {
+            //We know there is room for the node. So I cant index out of bounds
+            //start at end of count
+            //While k > r.keys
+            //shift k[i] to k[i+1]
+            
+        /* --VISUAL-- 
+         * key = 5, Order = 5
+         * [1][6][10][?] 
+         * Shift -> [1][6][10][10] -> [1][6][6][10] -> [1][5][6][10]
+         */
+            r.keys[i+1] = r.keys[i];
+            r.children[i+1] = r.children[i];
+            i--;
+        }
+        r.keys[i] = k;
+        r.children[i] = addr;
+        r.count--;
     }
     public void print() { 
     //print the B+Tree to standard output 
