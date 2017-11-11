@@ -101,6 +101,43 @@ private class BTreeNode {
            count++;
        }
    }
+   
+   /**
+    * This method will split a node into 2 parts. <br>
+    * Returns the new part and modifies the caller
+    * @return The new node from split
+    */
+   private BTreeNode split(int key, long addr) {
+       //Make a new temp node that is 1 bigger than normal nodes
+       if(isLeaf()) {
+           count--;
+       } else {
+           count++;
+       }
+       BTreeNode splitNode = new BTreeNode(count, Arrays.copyOf(keys, keys.length+1),Arrays.copyOf(children, children.length+1), addr);
+       
+       //Add the new entry to it
+       splitNode.insertEntry(key,addr);
+      
+       //Determine the count of the new node. ??? Maybe use count field instead?
+      int newCount = (int)Math.ceil(splitNode.keys.length/2);
+      
+       //split   the values  (including  k)  between node  and the newnode
+       //Update the caller
+       count = (newCount - Math.abs(count-1)); 
+       keys = Arrays.copyOfRange(splitNode.keys, 0, newCount-1);
+       children = Arrays.copyOfRange(splitNode.children, 0, newCount-1);
+      
+       if(splitNode.isLeaf()) {
+           newCount*=-1;
+           count*=-1;
+       }
+       
+       //Create the return node
+       BTreeNode newnode = new BTreeNode(newCount,Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length-1),Arrays.copyOfRange(splitNode.children, newCount -1, splitNode.children.length-1),getFree());
+       
+       return newnode;
+   }
 }  
 /* ************************************************
  * End of Node class
@@ -165,17 +202,8 @@ public BTree(String filename) {
                 //Write node to the file
                 r.writeNode();
             } else {
-                BTreeNode splitNode = new BTreeNode(r.count, Arrays.copyOf(r.keys, r.keys.length+1),Arrays.copyOf(r.children, r.children.length+1), r.addr);
-                splitNode.insertEntry(key,addr);
-                //let  newnode be  a  new B+tree  Node
-               int newCount = (int)Math.ceil(splitNode.keys.length/2);
-                       
-                //split   the values  (including  k)  between node  and the newnode
-               BTreeNode newnode = new BTreeNode(newCount*-1,Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length-1),Arrays.copyOfRange(splitNode.children, newCount -1, splitNode.children.length-1),getFree());
-               
-                r.count = (newCount - Math.abs(r.count))*-1; 
-                r.keys = Arrays.copyOfRange(splitNode.keys, 0, newCount-1);
-                r.children = Arrays.copyOfRange(splitNode.children, 0, newCount-1);
+                BTreeNode newnode = r.split(key,addr);
+
                 //let val be  the smallest    value   in  the newnode
                 val = newnode.keys[0];
                 //write   node    to  the file    (into   the same    location where   is  was previously  located)  
@@ -198,21 +226,22 @@ public BTree(String filename) {
                     node.writeNode();
 //                  set split   to  false 
                     split = false;
+                } else {
+                    BTreeNode newnode = node.split(val, loc);
+                    node.writeNode();
+                    newnode.writeNode();
+                    val = newnode.keys[0];
+                    loc = newnode.addr;
+                    split = true;
                 }
-//                        if      there   is  room    in  node    for a   new value   
-//                                  
-//                        else    
-//                                let newnode be  a   new B+treeNode
-//                                let val be  the middle  value   of  the values  in  the node    (including  val)    
-//                                put the values  less    than    val and matching    loca?ons    in  node    
-//                                put the values  greater than    val and matching    loca?ons    in  newnode
-//                                write   node    to  the file    (into   the same    loca?on where   is  was previously  located)    
-//                                write   newnode into    the file    
-//                                let loc be  the address in  the file    of  newnode
-//                                split   remains true    
-//                        }   
-//            
+            }//End while
+            if (split) { //Then root was split
+                BTreeNode rootNode = new BTreeNode(root);
+                BTreeNode newnode = rootNode.split(val, loc);
+                root = newnode.addr;
+                newnode.writeNode();
             }
+            
         }
         
         return inTable;
