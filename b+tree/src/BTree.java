@@ -71,6 +71,36 @@ private class BTreeNode {
    private boolean isLeaf() {
        return count < 0;
    }
+   
+   private boolean isRoom() {
+       return Math.abs(count) < order - 1;
+   }
+   
+   private void insertEntry(int k, long addr) {
+       int i = Math.abs(count);
+       while(i >= 0 && k < keys[i]) {
+           //We know there is room for the node. So I cant index out of bounds
+           //start at end of count
+           //While k > r.keys
+           //shift k[i] to k[i+1]
+           
+       /* --VISUAL-- 
+        * key = 5, Order = 5
+        * [1][6][10][?] 
+        * Shift -> [1][6][10][10] -> [1][6][6][10] -> [1][5][6][10]
+        */
+           keys[i+1] = keys[i];
+           children[i+1] = children[i];
+           i--;
+       }
+       keys[i] = k;
+       children[i] = addr;
+       if(isLeaf()) {
+           count--;
+       } else {
+           count++;
+       }
+   }
 }  
 /* ************************************************
  * End of Node class
@@ -123,26 +153,65 @@ public BTree(String filename) {
         boolean inTable = -1 != search(key);
         boolean split = false;
         if(!inTable) {
+            long loc = 0;
+            int val = 0;
             //Do Insert
             BTreeNode r = paths.pop();
             
             //If there is room in node for new value: M-1 children
-            if (Math.abs(r.count) < order - 1) {
+            if (r.isRoom()) {
                 //Insert k into the node
-                insertKey(r,key,addr);
+                r.insertEntry(key,addr);
                 //Write node to the file
                 r.writeNode();
             } else {
                 BTreeNode splitNode = new BTreeNode(r.count, Arrays.copyOf(r.keys, r.keys.length+1),Arrays.copyOf(r.children, r.children.length+1), r.addr);
-               insertKey(splitNode,key,addr);
+                splitNode.insertEntry(key,addr);
                 //let  newnode be  a  new B+tree  Node
-                BTreeNode newNode = new BTreeNode(splitNode.keys.length/2,)
+               int newCount = (int)Math.ceil(splitNode.keys.length/2);
+                       
                 //split   the values  (including  k)  between node  and the newnode
+               BTreeNode newnode = new BTreeNode(newCount*-1,Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length-1),Arrays.copyOfRange(splitNode.children, newCount -1, splitNode.children.length-1),getFree());
+               
+                r.count = (newCount - Math.abs(r.count))*-1; 
+                r.keys = Arrays.copyOfRange(splitNode.keys, 0, newCount-1);
+                r.children = Arrays.copyOfRange(splitNode.children, 0, newCount-1);
                 //let val be  the smallest    value   in  the newnode
-                //write   node    to  the file    (into   the same    loca?on where   is  was previously  located)    
-                //write   newnode into    the file    
+                val = newnode.keys[0];
+                //write   node    to  the file    (into   the same    location where   is  was previously  located)  
+                //write   newnode into    the file   
+                r.writeNode();
+                newnode.writeNode();
                 //let loc be  the address in  the file    of  newnode
+                loc = newnode.addr;
                 //set split   to  true 
+                split = true;
+            }
+            
+//            while  (!path.empty()  &&  split)      {   
+            while (!paths.empty() && split) {
+                BTreeNode node = paths.pop();
+                if(node.isRoom()) {
+                  //  insert  val and loc into    node   
+                    r.insertEntry(val, loc);
+//                  write   node    to  the file    (into   the same    location where   is  was previously  located)    
+                    node.writeNode();
+//                  set split   to  false 
+                    split = false;
+                }
+//                        if      there   is  room    in  node    for a   new value   
+//                                  
+//                        else    
+//                                let newnode be  a   new B+treeNode
+//                                let val be  the middle  value   of  the values  in  the node    (including  val)    
+//                                put the values  less    than    val and matching    loca?ons    in  node    
+//                                put the values  greater than    val and matching    loca?ons    in  newnode
+//                                write   node    to  the file    (into   the same    loca?on where   is  was previously  located)    
+//                                write   newnode into    the file    
+//                                let loc be  the address in  the file    of  newnode
+//                                split   remains true    
+//                        }   
+//            
             }
         }
         
@@ -201,26 +270,25 @@ public BTree(String filename) {
      * @param k Key to add
      * @param addr Address of child
      */
-    private void insertKey(BTreeNode r, int k, long addr) {
-        int i = Math.abs(r.count);
-        while(i >= 0 && k < r.keys[i]) {
-            //We know there is room for the node. So I cant index out of bounds
-            //start at end of count
-            //While k > r.keys
-            //shift k[i] to k[i+1]
-            
-        /* --VISUAL-- 
-         * key = 5, Order = 5
-         * [1][6][10][?] 
-         * Shift -> [1][6][10][10] -> [1][6][6][10] -> [1][5][6][10]
-         */
-            r.keys[i+1] = r.keys[i];
-            r.children[i+1] = r.children[i];
-            i--;
+  
+    
+    private long getFree() {
+        long addr = 0;
+        //When at the end of free, write to the end of file.
+        try {
+            if (free == 0) {
+                addr = f.length();
+            } else {
+                //New address is where free is pointing
+                addr = free;
+                //Move free value to next in list.
+                f.seek(free);
+                free = f.readLong();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        r.keys[i] = k;
-        r.children[i] = addr;
-        r.count--;
+        return addr;
     }
     public void print() { 
     //print the B+Tree to standard output 
