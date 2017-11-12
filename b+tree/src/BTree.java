@@ -79,7 +79,7 @@ private class BTreeNode {
        return count < 0;
    }
    
-   private boolean isRoom() {
+   private boolean hasRoom() {
        return Math.abs(count) < order - 1;
    }
    
@@ -150,12 +150,7 @@ private class BTreeNode {
 //       } else {
 //           count++;
 //       }
-       BTreeNode splitNode;
-       if(isRoom()) {
-           splitNode = new BTreeNode(this.addr);
-       } else {
-           splitNode = new BTreeNode(count, Arrays.copyOf(keys, order),Arrays.copyOf(children, order+1), this.addr);
-       }
+         BTreeNode splitNode = new BTreeNode(count, Arrays.copyOf(keys, order),Arrays.copyOf(children, order+1), this.addr);
        
        //Add the new entry to it
        splitNode.insertEntry(key,addr);
@@ -165,17 +160,22 @@ private class BTreeNode {
       
        //split   the values  (including  k)  between node  and the newnode
        //Update the caller //splitnode.count - newCount
-       count = Math.abs(count) + 1 - newCount; 
-       keys = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, 0, count),order-1);
-       children = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, 0, count),order);
+       int callerNewCount = Math.abs(count) + 1 - newCount;
+       if(isLeaf()) {
+           count = callerNewCount*-1;
+       } else {
+           count = callerNewCount;  
+       }
+       keys = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, 0, Math.abs(count)),order-1);
+       children = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, 0, Math.abs(count)),order);
+       
        int[] keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length),order-1);
        long[] childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount -1, splitNode.children.length),order);
        if(splitNode.isLeaf()) {
            newCount*=-1;
        }
-       
-       //Create the return node
        BTreeNode newnode = new BTreeNode(newCount,keyArr,childrenArr,getFree());
+       children[order-1] = newnode.addr;
        
        return newnode;
    }
@@ -243,7 +243,7 @@ public BTree(String filename) {
             BTreeNode r = paths.pop();
             
             //If there is room in node for new value: M-1 children Go BACK
-            if (r.isRoom()) {
+            if (r.hasRoom()) {
                 //Insert k into the node
                 r.insertEntry(key,addr);
                 //Write node to the file
@@ -263,10 +263,9 @@ public BTree(String filename) {
                 split = true;
             }
             
-//            while  (!path.empty()  &&  split)      {   
             while (!paths.empty() && split) {
                 BTreeNode node = paths.pop();
-                if(node.isRoom()) {
+                if(node.hasRoom()) {
                   //  insert  val and loc into    node   
                     r.insertEntry(val, loc);
 //                  write   node    to  the file    (into   the same    location where   is  was previously  located)    
@@ -283,11 +282,17 @@ public BTree(String filename) {
                 }
             }//End while
             if (split) { //Then root was split
-                BTreeNode rootNode = new BTreeNode(root);
-                BTreeNode newnode = rootNode.split(val, loc);
+                //BTreeNode rootNode = new BTreeNode(root);
+                int[] keys = new int[order-1];
+                long[] children = new long[order];
+                keys[0] = val;
+                children[0] = root;
+                children[1] = loc;
+                
+                //Who's address do I give you?
+                BTreeNode newnode = new BTreeNode(1,keys,children,getFree());
                 root = newnode.addr;
                 newnode.writeNode();
-                rootNode.writeNode();
             }
             
         }
@@ -425,12 +430,13 @@ public BTree(String filename) {
     public static void main(String[] args) {
         BTree tree = new BTree("tree");
         System.out.println("I got this far!");
-        long addr = tree.search(75);
-        System.out.println(addr);
-        tree.insert(50, 24);
-        tree.insert(75, 64);
-        tree.insert(130, 48);
-        tree.insert(150, 128);
+//        long addr = tree.search(75);
+//        System.out.println(addr);
+        tree.insert(110, 32);
+//        tree.insert(50, 24);
+//        tree.insert(75, 64);
+//        tree.insert(130, 48);
+//        tree.insert(150, 128);
         tree.print();
         tree.close();
        // System.out.println(tree.search(100));
