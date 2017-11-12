@@ -38,10 +38,8 @@ public class DBTable {
         try {
             rows = new RandomAccessFile("filename","rw");
             rows.seek(0);
-            for()
             
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -58,6 +56,7 @@ public class DBTable {
        The method must use the B+tree to determine if a row with the key exists. 
        If the row is added the key is also added into the B+tree. 
     */ 
+        return false;
     } 
     
     public boolean remove(int key) { 
@@ -68,6 +67,7 @@ public class DBTable {
        
        If the row is deleted the key must be deleted from the B+Tree
     */ 
+        return false;
     } 
      
     public LinkedList<String> search(int key) { 
@@ -77,7 +77,7 @@ public class DBTable {
        If a row with the key is not found return an empty list 
        The method must use the equality search in B+Tree
     */ 
-    
+        return null;
     }
     public LinkedList<LinkedList<String>> rangeSearch(int low, int high) {  
     //PRE: low <= high 
@@ -87,7 +87,7 @@ public class DBTable {
        If there are no rows with a key in the range return an empty list 
        The method must use the range search in B+Tree
     */
-        
+       return null; 
     } 
     public void print() { 
     //Print the rows to standard output is ascending order (based on the keys) 

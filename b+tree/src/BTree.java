@@ -1,6 +1,6 @@
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Stack;
@@ -30,25 +30,32 @@ private class BTreeNode {
     * @param addr address of node
     */
    private BTreeNode (long addr) {
-       try {
-           f.seek(addr);
-           this.addr = addr;
-           count = f.readInt();
-           for (int i = 0; i < order; i++) {
-               keys[i] = f.readInt();
+       if(addr != 0) {
+           keys = new int[order-1];
+           children = new long[order];
+           try {
+               f.seek(addr);
+               this.addr = addr;
+               count = f.readInt();
+               for (int i = 0; i < order-1; i++) {
+                   keys[i] = f.readInt();
+               }
+               
+               for (int i = 0; i < order; i++) {
+                   children[i] = f.readLong();
+               }
+               
+           } catch(EOFException e){
+               System.out.println("Got him!");
+           } catch (IOException e) {
+               System.out.println("No I did!");
+               e.printStackTrace();
            }
-           
-           for (int i = 0; i < order; i++) {
-               children[i] = f.readLong();
-           }
-           
-       } catch (IOException e) {
-           e.printStackTrace();
        }
    }
    
    /**
-    *  //Writes the node to the file at location addr
+    *  Writes the node to the file at location addr
     * @param addr address of node in file
     */
    private void writeNode() {
@@ -57,7 +64,7 @@ private class BTreeNode {
            
            f.writeInt(count);
            //Write out the keys
-           for(int i = 0; i < order; i++) {
+           for(int i = 0; i < order-1; i++) {
                f.writeInt(keys[i]);
            }
            //Write out the children
@@ -74,6 +81,21 @@ private class BTreeNode {
    
    private boolean isRoom() {
        return Math.abs(count) < order - 1;
+   }
+   
+   @Override
+   public String toString() {
+       String str = Long.toString(addr);
+       str += " : " + count;
+       for (int key : keys) {
+           str += " " + key;
+       }
+       str += " |";
+       for (long children : children) {
+           str += " " + children;
+       }
+       
+       return str;
    }
    
    private void insertEntry(int k, long addr) {
@@ -130,7 +152,6 @@ private class BTreeNode {
       
        if(splitNode.isLeaf()) {
            newCount*=-1;
-           count*=-1;
        }
        
        //Create the return node
@@ -174,6 +195,7 @@ public BTree(String filename) {
             root = f.readLong();
             free = f.readLong();
             blockSize = f.readInt();
+            order = blockSize/12;
             paths = new Stack<>();
         } catch (IOException e) {
             e.printStackTrace();
@@ -187,7 +209,12 @@ public BTree(String filename) {
        return true if the key is added 
        return false if the key is a duplicate 
     */ 
-        boolean inTable = -1 != search(key);
+        if (root == 0) {
+            System.out.println("Wait what!?");
+            insertRoot(key,addr);
+            return true;
+        }
+        boolean inTable = 0 != search(key);
         boolean split = false;
         if(!inTable) {
             long loc = 0;
@@ -246,11 +273,21 @@ public BTree(String filename) {
         
         return inTable;
     } 
+    private void insertRoot(int key, long addr) {
+        int[] keys = new int[order-1];
+        long[] children = new long[order];
+        keys[0] = key;
+        children[0] = addr;
+        BTreeNode r = new BTreeNode(-1,keys,children,getFree());
+        r.writeNode();
+        root = r.addr;
+    }
     public long remove(int key) { 
     /* 
        If  the key is in the Btree, remove the key and return the address of the row 
        return 0 if the key is not found in the B+tree
-    */ 
+    */
+        return 0;
     } 
     
     public long search(int k) { 
@@ -260,27 +297,60 @@ public BTree(String filename) {
        otherwise return 0  
     */ 
         int i = 0;
-        
         BTreeNode r = new BTreeNode(root);
         paths.push(r);
-        while(k != r.keys[i] && !r.isLeaf()) {
-            //Look at in index leaves to guide where to go
-            for(i = 0; i < Math.abs(r.count); i++) {
-                if(k < r.keys[i]) {
-                   break;
-                   //We have found where to look next in the path
-                }
-                //We looked at all the keys and are at a leaf, k is not there.
-                if (i > Math.abs(r.count) && r.isLeaf()) {
-                    return -1;
+        
+        if(root == 0) {
+            System.out.println("Root is zero!");
+            return 0;
+        }
+        
+//        while(k >= r.keys[i]/* && !r.isLeaf()*/) {
+//            //Look at in index leaves to guide where to go
+//            for(i = 0; i < Math.abs(r.count); i++) {
+//                if(k <= r.keys[i]) {
+//                   break;
+//                   //We have found where to look next in the path
+//                }
+//                
+//            }
+//          //We looked at all the keys and are at a leaf, k is not there.
+//            if (i > Math.abs(r.count) && r.isLeaf()) {
+//                return 0;
+//            }
+//            //Add to the paths the address we are going to look at
+//            r = new BTreeNode(r.children[i]);
+//            paths.push(r);
+//        }
+//        //We stopped looping that must mean we found the value
+//        return r.children[i];
+        
+        //Logic to follow search path and bring me to a leaf
+        while(!r.isLeaf()) {
+            for(i = 0; i <= Math.abs(r.count); i++) {
+                //Will look at the first node that is greater than k
+                if (k <= r.keys[i]) {
+                    r = new BTreeNode(r.children[i]);
+                    paths.push(r);
+                    break;
+                //k is larger than everything else, look at last node
+                } else if (i == Math.abs(r.count)) {
+                    r = new BTreeNode(r.children[i]);
+                    paths.push(r);
+                    break;
                 }
             }
-            //Add to the paths the address we are going to look at
-            r = new BTreeNode(r.children[i]);
-            paths.push(r);
         }
-        //We stopped looping that must mean we found the value
-        return r.children[i];
+        long addr = 0;
+        //I am now at a leaf. Look at all the contents of the node.
+        for(i = 0; i < Math.abs(r.count); i++) {
+            if (k == r.keys[i]) {
+                addr = r.children[i];
+                break;
+            }
+        }
+        
+        return addr;
     } 
     public LinkedList<Long> rangeSearch(int low, int high) {
     //PRE: low <= high 
@@ -289,6 +359,7 @@ public BTree(String filename) {
        return a list of row addresses for all keys in the range low to high inclusive 
        return an empty list when no keys are in the range 
     */ 
+        return null;
     }
     /**
      * <pre>PRE: There is room for the new key and child.
@@ -322,8 +393,41 @@ public BTree(String filename) {
     public void print() { 
     //print the B+Tree to standard output 
     //print one node per line 
+        try {
+            f.seek(20);
+            System.out.println("ROOT: " + root);
+            System.out.println("FREE: " + free);
+            while(f.getFilePointer() < f.length()) {
+                BTreeNode n = new BTreeNode(f.getFilePointer());
+                System.out.println(n);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     } 
     public void close() { 
-    //close the B+tree. The tree should not be accessed after close is called 
+    //close the randomaccessfile
+    //before closing update the values of root and free if necessary 
+        try {
+            f.seek(0);
+            f.writeLong(root);
+            f.writeLong(free);
+            f.writeInt(blockSize);
+            f.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     } 
+    
+    public static void main(String[] args) {
+        BTree tree = new BTree("tree");
+        System.out.println("I got this far!");
+        long addr = tree.search(75);
+        System.out.println(addr);
+       // tree.insert(100, 24);
+        tree.print();
+        tree.close();
+       // System.out.println(tree.search(100));
+    }
+    
 } 
