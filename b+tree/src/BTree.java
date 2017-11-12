@@ -99,21 +99,33 @@ private class BTreeNode {
    }
    
    private void insertEntry(int k, long addr) {
-       int i = Math.abs(count);
-       while(i >= 0 && k < keys[i]) {
-           //We know there is room for the node. So I cant index out of bounds
-           //start at end of count
-           //While k > r.keys
-           //shift k[i] to k[i+1]
-           
-       /* --VISUAL-- 
-        * key = 5, Order = 5
-        * [1][6][10][?] 
-        * Shift -> [1][6][10][10] -> [1][6][6][10] -> [1][5][6][10]
-        */
-           keys[i+1] = keys[i];
-           children[i+1] = children[i];
-           i--;
+       int i = Math.abs(count)-1;
+       if (k > keys[i]) {
+           i++;
+       } else {
+           while(i > 0 && k < keys[i]) {
+               //We know there is room for the node. So I cant index out of bounds
+               //start at end of count
+               //While k > r.keys
+               //shift k[i] to k[i+1]
+               
+           /* --VISUAL-- 
+            * key = 5, Order = 5
+            * [1][6][10][?] 
+            * Shift -> [1][6][10][10] -> [1][6][6][10] -> [1][5][6][10]
+            */
+               keys[i+1] = keys[i];
+               children[i+1] = children[i];
+               i--;
+           }
+           if (i == 0) { 
+               if(k < keys[i]) {
+                   keys[i+1] = keys[i];
+                   children[i+1] = children[i];
+               } else {
+                   i++;
+               }
+           }
        }
        keys[i] = k;
        children[i] = addr;
@@ -127,35 +139,43 @@ private class BTreeNode {
    /**
     * This method will split a node into 2 parts. <br>
     * Returns the new part and modifies the caller
+    * @param key New key value to insert
+    * @param addr Adress in DBTable of key
     * @return The new node from split
     */
    private BTreeNode split(int key, long addr) {
        //Make a new temp node that is 1 bigger than normal nodes
-       if(isLeaf()) {
-           count--;
+//       if(isLeaf()) {
+//           count--;
+//       } else {
+//           count++;
+//       }
+       BTreeNode splitNode;
+       if(isRoom()) {
+           splitNode = new BTreeNode(this.addr);
        } else {
-           count++;
+           splitNode = new BTreeNode(count, Arrays.copyOf(keys, order),Arrays.copyOf(children, order+1), this.addr);
        }
-       BTreeNode splitNode = new BTreeNode(count, Arrays.copyOf(keys, keys.length+1),Arrays.copyOf(children, children.length+1), addr);
        
        //Add the new entry to it
        splitNode.insertEntry(key,addr);
       
        //Determine the count of the new node. ??? Maybe use count field instead?
-      int newCount = (int)Math.ceil(splitNode.keys.length/2);
+      int newCount = (int) Math.ceil((double)splitNode.keys.length/2);
       
        //split   the values  (including  k)  between node  and the newnode
-       //Update the caller
-       count = (newCount - Math.abs(count-1)); 
-       keys = Arrays.copyOfRange(splitNode.keys, 0, newCount-1);
-       children = Arrays.copyOfRange(splitNode.children, 0, newCount-1);
-      
+       //Update the caller //splitnode.count - newCount
+       count = Math.abs(count) + 1 - newCount; 
+       keys = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, 0, count),order-1);
+       children = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, 0, count),order);
+       int[] keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length),order-1);
+       long[] childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount -1, splitNode.children.length),order);
        if(splitNode.isLeaf()) {
            newCount*=-1;
        }
        
        //Create the return node
-       BTreeNode newnode = new BTreeNode(newCount,Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length-1),Arrays.copyOfRange(splitNode.children, newCount -1, splitNode.children.length-1),getFree());
+       BTreeNode newnode = new BTreeNode(newCount,keyArr,childrenArr,getFree());
        
        return newnode;
    }
@@ -222,7 +242,7 @@ public BTree(String filename) {
             //Do Insert
             BTreeNode r = paths.pop();
             
-            //If there is room in node for new value: M-1 children
+            //If there is room in node for new value: M-1 children Go BACK
             if (r.isRoom()) {
                 //Insert k into the node
                 r.insertEntry(key,addr);
@@ -267,11 +287,12 @@ public BTree(String filename) {
                 BTreeNode newnode = rootNode.split(val, loc);
                 root = newnode.addr;
                 newnode.writeNode();
+                rootNode.writeNode();
             }
             
         }
         
-        return inTable;
+        return !inTable;
     } 
     private void insertRoot(int key, long addr) {
         int[] keys = new int[order-1];
@@ -290,12 +311,14 @@ public BTree(String filename) {
         return 0;
     } 
     
+    //Calling search will reset the paths stack. I don't forsee this being an issue
     public long search(int k) { 
     /* 
        This is an equality search 
        If the key is found return the address of the row with the key 
        otherwise return 0  
     */ 
+        paths = new Stack<>();
         int i = 0;
         BTreeNode r = new BTreeNode(root);
         paths.push(r);
@@ -304,26 +327,6 @@ public BTree(String filename) {
             System.out.println("Root is zero!");
             return 0;
         }
-        
-//        while(k >= r.keys[i]/* && !r.isLeaf()*/) {
-//            //Look at in index leaves to guide where to go
-//            for(i = 0; i < Math.abs(r.count); i++) {
-//                if(k <= r.keys[i]) {
-//                   break;
-//                   //We have found where to look next in the path
-//                }
-//                
-//            }
-//          //We looked at all the keys and are at a leaf, k is not there.
-//            if (i > Math.abs(r.count) && r.isLeaf()) {
-//                return 0;
-//            }
-//            //Add to the paths the address we are going to look at
-//            r = new BTreeNode(r.children[i]);
-//            paths.push(r);
-//        }
-//        //We stopped looping that must mean we found the value
-//        return r.children[i];
         
         //Logic to follow search path and bring me to a leaf
         while(!r.isLeaf()) {
@@ -424,7 +427,10 @@ public BTree(String filename) {
         System.out.println("I got this far!");
         long addr = tree.search(75);
         System.out.println(addr);
-       // tree.insert(100, 24);
+        tree.insert(50, 24);
+        tree.insert(75, 64);
+        tree.insert(130, 48);
+        tree.insert(150, 128);
         tree.print();
         tree.close();
        // System.out.println(tree.search(100));
