@@ -1,4 +1,5 @@
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
@@ -101,8 +102,15 @@ private class BTreeNode {
    private void insertEntry(int k, long addr) {
        int i = Math.abs(count)-1;
        int j = Math.abs(count)-1;
+       
+       //The guide leaves need to be offset by 1.
+       if(!isLeaf()) {
+           j++;
+       }
+       //Case that k is greater than everything
        if (k > keys[i]) {
            i++;
+           j++;
        } else {
            while(i > 0 && k < keys[i]) {
                //We know there is room for the node. So I cant index out of bounds
@@ -116,21 +124,29 @@ private class BTreeNode {
             * Shift -> [1][6][10][10] -> [1][6][6][10] -> [1][5][6][10]
             */
                keys[i+1] = keys[i];
-               children[i+1] = children[i];
+               children[j+1] = children[j];
                i--;
+               j--;
            }
+           //Case that k is either that smallest or second smallest
            if (i == 0) { 
                //K must be the smallest 
                if(k < keys[i]) {
                    keys[i+1] = keys[i];
-                   children[i+1] = children[i];
+                   children[j+1] = children[j];
+                   
+               //Second smallest
                } else {
                    i++;
+                   j++;
                }
            }
        }
+       //Put the new key in place.
        keys[i] = k;
-       children[i] = addr;
+       children[j] = addr;
+       
+       //Add to the count
        if(isLeaf()) {
            count--;
        } else {
@@ -195,7 +211,11 @@ public BTree(String filename, int bsize) {
 //all B+Tree nodes will use bsize bytes 
 //make a new B+tree
     try {
-        f = new RandomAccessFile(filename,"rw");
+        File path = new File(filename);
+        if (path.exists()) {
+            path.delete();
+        } 
+        f = new RandomAccessFile(path,"rw");
         //Set everything up
         root = 0;
         free = 0;
@@ -433,18 +453,27 @@ public BTree(String filename) {
     } 
     
     public static void main(String[] args) {
-        BTree tree = new BTree("tree");
+        BTree tree = new BTree("tree", 60);
         System.out.println("I got this far!");
-//        long addr = tree.search(75);
-//        System.out.println(addr);
+        //long addr = tree.search(75);
+       // System.out.println(addr);
+//        tree.insert(110,32);
 //        tree.insert(50, 24);
 //        tree.insert(75, 64);
 //        tree.insert(130, 48);
 //        tree.insert(150, 128);
-        //tree.insert(120, 255);
-        //tree.insert(20, 272);
-        //tree.insert(100, 316);
-        tree.insert(160, 353);
+//        tree.insert(120, 255);
+//        tree.insert(20, 272);
+//        tree.insert(100, 316);
+//        tree.insert(160, 353);
+//        tree.insert(5, 420);
+//        tree.insert(112, 456);
+//       tree.insert(123, 495);
+//        tree.insert(125, 535);
+        tree.insert(50, 24);
+        tree.insert(130, 48);
+        tree.insert(110, 32);
+        tree.insert(120, 255);
         tree.print();
         tree.close();
        // System.out.println(tree.search(100));
