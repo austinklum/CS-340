@@ -100,6 +100,7 @@ private class BTreeNode {
    
    private void insertEntry(int k, long addr) {
        int i = Math.abs(count)-1;
+       int j = Math.abs(count)-1;
        if (k > keys[i]) {
            i++;
        } else {
@@ -119,6 +120,7 @@ private class BTreeNode {
                i--;
            }
            if (i == 0) { 
+               //K must be the smallest 
                if(k < keys[i]) {
                    keys[i+1] = keys[i];
                    children[i+1] = children[i];
@@ -166,6 +168,7 @@ private class BTreeNode {
        } else {
            count = callerNewCount;  
        }
+       long link = children[order-1];
        keys = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, 0, Math.abs(count)),order-1);
        children = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, 0, Math.abs(count)),order);
        
@@ -174,6 +177,8 @@ private class BTreeNode {
        if(splitNode.isLeaf()) {
            newCount*=-1;
        }
+       //Maintain LinkedList and add a new node
+       childrenArr[order-1] = link;
        BTreeNode newnode = new BTreeNode(newCount,keyArr,childrenArr,getFree());
        children[order-1] = newnode.addr;
        
@@ -267,7 +272,7 @@ public BTree(String filename) {
                 BTreeNode node = paths.pop();
                 if(node.hasRoom()) {
                   //  insert  val and loc into    node   
-                    r.insertEntry(val, loc);
+                    node.insertEntry(val, loc);
 //                  write   node    to  the file    (into   the same    location where   is  was previously  located)    
                     node.writeNode();
 //                  set split   to  false 
@@ -337,7 +342,7 @@ public BTree(String filename) {
         while(!r.isLeaf()) {
             for(i = 0; i <= Math.abs(r.count); i++) {
                 //Will look at the first node that is greater than k
-                if (k <= r.keys[i]) {
+                if (k < r.keys[i]) {
                     r = new BTreeNode(r.children[i]);
                     paths.push(r);
                     break;
@@ -432,11 +437,14 @@ public BTree(String filename) {
         System.out.println("I got this far!");
 //        long addr = tree.search(75);
 //        System.out.println(addr);
-        tree.insert(110, 32);
 //        tree.insert(50, 24);
 //        tree.insert(75, 64);
 //        tree.insert(130, 48);
 //        tree.insert(150, 128);
+        //tree.insert(120, 255);
+        //tree.insert(20, 272);
+        //tree.insert(100, 316);
+        tree.insert(160, 353);
         tree.print();
         tree.close();
        // System.out.println(tree.search(100));
