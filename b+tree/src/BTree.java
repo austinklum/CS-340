@@ -193,7 +193,7 @@ private class BTreeNode {
        //Save a 'hash' table of all the associated children addrs
        if(!isLeaf()) {
            for(int i = 0; i < n; i++) {
-               hash[keys[i]] = children[i];
+               hash[keys[i]] = children[i + 1];
            }
        } else {
            for(int i = 0; i < n; i++) {
@@ -219,8 +219,8 @@ private class BTreeNode {
        if(!isLeaf()) {
        //re do the children array to match the key array
            System.out.println("Well now what?");
-           for (int i = 1; i < n; i++) {
-               children[i] = hash[keys[i]];
+           for (int i = 0; i < n; i++) {
+               children[i + 1] = hash[keys[i]];
            }
        } else {
            for (int i = 0; i < n; i++) {
@@ -544,9 +544,9 @@ public BTree(String filename) {
         tree.print();
         tree.insert(160, 353);
         tree.insert(5, 420);
-//        tree.insert(112, 456);
-//        tree.insert(123, 495);
-        //tree.insert(125, 535);
+        tree.insert(112, 456);
+        tree.insert(123, 495);
+        tree.insert(125, 535);
 
 
         tree.print();
