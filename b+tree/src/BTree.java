@@ -218,7 +218,7 @@ private class BTreeNode {
        }
        if(!isLeaf()) {
        //re do the children array to match the key array
-           System.out.println("Well now what?");
+           System.out.println("Adding to non-leaf node : " + toString());
            for (int i = 0; i < n; i++) {
                children[i + 1] = hash[keys[i]];
            }
@@ -330,7 +330,7 @@ public BTree(String filename) {
        return false if the key is a duplicate 
     */ 
         if (root == 0) {
-            System.out.println("Wait what!?");
+            System.out.println("Inserted a new root!");
             insertRoot(key,addr);
             return true;
         }
@@ -436,17 +436,17 @@ public BTree(String filename) {
         //Logic to follow search path and bring me to a leaf
         while(!r.isLeaf()) {
             for(i = 0; i <= Math.abs(r.count); i++) {
+              //k is larger than everything else, look at last node
+                if (i == Math.abs(r.count)) {
+                    r = new BTreeNode(r.children[i]);
+                    paths.push(r);
+                    break;
                 //Will look at the first node that is greater than k
-                if (k < r.keys[i]) {
+                } else if (k < r.keys[i]) {
                     r = new BTreeNode(r.children[i]);
                     paths.push(r);
                     break;
-                //k is larger than everything else, look at last node
-                } else if (i == Math.abs(r.count)) {
-                    r = new BTreeNode(r.children[i]);
-                    paths.push(r);
-                    break;
-                }
+                }  
             }
         }
         long addr = 0;
@@ -541,12 +541,15 @@ public BTree(String filename) {
        
         tree.insert(20, 272);
         tree.insert(100, 316);
-        tree.print();
         tree.insert(160, 353);
         tree.insert(5, 420);
         tree.insert(112, 456);
         tree.insert(123, 495);
         tree.insert(125, 535);
+        //At this point we have M-1 keys in the root and M children
+        tree.insert(180, 582);
+        //This will split our root. If this works, we should be set.
+        tree.insert(170, 612);
 
 
         tree.print();
