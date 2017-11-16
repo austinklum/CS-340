@@ -100,57 +100,132 @@ private class BTreeNode {
    }
    
    private void insertEntry(int k, long addr) {
-       int i = Math.abs(count)-1;
-       int j = Math.abs(count)-1;
-       
-       //The guide leaves need to be offset by 1.
-       if(!isLeaf()) {
-           j++;
-       }
-       //Case that k is greater than everything
-       if (k > keys[i]) {
-           i++;
-           j++;
-       } else {
-           while(i > 0 && k < keys[i]) {
-               //We know there is room for the node. So I cant index out of bounds
-               //start at end of count
-               //While k > r.keys
-               //shift k[i] to k[i+1]
-               
-           /* --VISUAL-- 
-            * key = 5, Order = 5
-            * [1][6][10][?] 
-            * Shift -> [1][6][10][10] -> [1][6][6][10] -> [1][5][6][10]
-            */
-               keys[i+1] = keys[i];
-               children[j+1] = children[j];
-               i--;
-               j--;
-           }
-           //Case that k is either that smallest or second smallest
-           if (i == 0) { 
-               //K must be the smallest 
-               if(k < keys[i]) {
-                   keys[i+1] = keys[i];
-                   children[j+1] = children[j];
-                   
-               //Second smallest
-               } else {
-                   i++;
-                   j++;
-               }
-           }
-       }
-       //Put the new key in place.
-       keys[i] = k;
-       children[j] = addr;
+//       int i = Math.abs(count)-1;
+//       int j = Math.abs(count)-1;
+//       
+//     //  The guide leaves need to be offset by 1.
+//       if(!isLeaf()) {
+//           j++;
+//       }
+//       //Case that k is greater than everything
+//       if (k > keys[i]) {
+//           i++;
+//           j++;
+//       } else {
+//           while(i > 0 && i < Math.abs(count) && k < keys[i]) {
+//               //We know there is room for the node. So I cant index out of bounds
+//               //start at end of count
+//               //While k > r.keys
+//               //shift k[i] to k[i+1]
+//               
+//           /* --VISUAL-- 
+//            * key = 5, Order = 5
+//            * [1][6][10][?] 
+//            * Shift -> [1][6][10][10] -> [1][6][6][10] -> [1][5][6][10]
+//            */
+//               keys[i+1] = keys[i];
+//               children[j+1] = children[j];
+//               i--;
+//               j--;
+//           }
+//           //Case that k is either that smallest or second smallest
+//           if (i == 0) { 
+//               //K must be the smallest 
+//               if(k < keys[i]) {
+//                   keys[i+1] = keys[i];
+//                   children[j+1] = children[j];
+//                   
+//               //Second smallest
+//               } else {
+//                   i++;
+//                   j++;
+//               }
+//           }
+//       }
+//       //Put the new key in place.
+//       keys[i] = k;
+//       children[j] = addr;
+//       int i;
+//      
+//       for (i=Math.abs(count)-1; (keys[i] > k && i > 0); i--) {
+//          keys[i+1] = keys[i];
+//          children[i+1] = children[i];
+//       }
+//       //Case that k is either that smallest or second smallest
+//     if (i == 0) { 
+//         //K must be the smallest 
+//         if(k < keys[i]) {
+//             keys[i+1] = keys[i];
+//             children[i+1] = children[i];
+//             keys[i] = k;
+//             children[i] = addr;
+//             
+//         //Second smallest
+//         } else {
+//             i++;
+//         }
+//     } else {
+//       keys[i+1] = k;
+//       children[i+1] = addr;
+//     }
        
        //Add to the count
        if(isLeaf()) {
            count--;
        } else {
            count++;
+       }
+       int n = Math.abs(count);
+       
+             
+       keys[n-1] = k;
+       if(!isLeaf()) {
+           children[n] = addr;
+       }else {
+           children[n-1] = addr;
+       }
+      // System.out.println(keys[n-1]);
+       
+       int max = keys[n-2] > k ? keys[n-2] : k;
+       long[] hash = new long[++max];
+      // System.out.println(max);
+       
+       //Save a 'hash' table of all the associated children addrs
+       if(!isLeaf()) {
+           for(int i = 0; i < n; i++) {
+               hash[keys[i]] = children[i];
+           }
+       } else {
+           for(int i = 0; i < n; i++) {
+               hash[keys[i]] = children[i];
+           }
+       }
+       
+       for (int i = 1; i < n; ++i){
+           int key = keys[i];
+           int j = i-1;
+//           if(!isLeaf()) {
+//               m = j ;
+//           }
+           
+           //Shift values in array
+           while (j>=0 && keys[j] > key) {
+               keys[j+1] = keys[j];
+               j--;
+           }
+           
+           keys[j+1] = key;
+       }
+       if(!isLeaf()) {
+       //re do the children array to match the key array
+           System.out.println("Well now what?");
+           for (int i = 1; i < n; i++) {
+               children[i] = hash[keys[i]];
+           }
+       } else {
+           for (int i = 0; i < n; i++) {
+               children[i] = hash[keys[i]];
+           }
        }
    }
    
@@ -457,23 +532,23 @@ public BTree(String filename) {
         System.out.println("I got this far!");
         //long addr = tree.search(75);
        // System.out.println(addr);
-//        tree.insert(110,32);
-//        tree.insert(50, 24);
-//        tree.insert(75, 64);
-//        tree.insert(130, 48);
-//        tree.insert(150, 128);
-//        tree.insert(120, 255);
-//        tree.insert(20, 272);
-//        tree.insert(100, 316);
-//        tree.insert(160, 353);
-//        tree.insert(5, 420);
-//        tree.insert(112, 456);
-//       tree.insert(123, 495);
-//        tree.insert(125, 535);
+        tree.insert(110,32);
         tree.insert(50, 24);
+        tree.insert(75, 64);
         tree.insert(130, 48);
-        tree.insert(110, 32);
+        tree.insert(150, 128);
         tree.insert(120, 255);
+       
+        tree.insert(20, 272);
+        tree.insert(100, 316);
+        tree.print();
+        tree.insert(160, 353);
+        tree.insert(5, 420);
+//        tree.insert(112, 456);
+//        tree.insert(123, 495);
+        //tree.insert(125, 535);
+
+
         tree.print();
         tree.close();
        // System.out.println(tree.search(100));
