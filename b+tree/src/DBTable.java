@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.LinkedList;
@@ -8,10 +9,11 @@ public class DBTable {
     int numOtherFields; 
     int otherFieldLengths[]; 
     //add other instance variables as needed 
-    
+    BTree tree;
     private class Row { 
         private int keyField; 
         private char otherFields[][]; 
+        private long addr;
        /* 
        Each row consists of unique key and one or more character array fields. 
        Each character array field is a fixed length field (for example 10 characters). 
@@ -20,8 +22,44 @@ public class DBTable {
        of x characters always uses space for x characters. 
        */ 
        //Constructors and other Row methods 
+       private Row(int key, char field[][], long addr) {
+           keyField    = key;
+           otherFields = field;
+           this.addr   = addr;
+       }
+        
+       private Row(long addr) {
+           try {
+                rows.seek(addr);
+                this.addr = addr;
+                keyField = rows.readInt();
+                otherFields = new char[numOtherFields][];
+                for(int i = 0; i < numOtherFields; i++) {
+                    otherFields[i] = new char[otherFieldLengths[i]];
+                    for(int j = 0; j < otherFields[i].length;j++) {
+                        otherFields[i][j] = rows.readChar();;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+       }
        
-    } 
+        private void writeRow() {
+            try {
+                rows.seek(addr);
+                rows.writeInt(keyField);
+                for(int i = 0; i < numOtherFields;i++) {
+                    for(int j = 0; j < otherFieldLengths[i]; j++) {
+                        rows.writeChar(otherFields[i][j]);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+       
+    }
     
     public DBTable(String filename, int fL[], int bsize ) { 
     /* 
@@ -36,9 +74,24 @@ public class DBTable {
        new file is created. 
     */ 
         try {
-            rows = new RandomAccessFile("filename","rw");
+            File path = new File(filename);
+            File treePath = new File(filename+"_tree");
+            if(path.exists()) {
+                path.delete();
+                treePath.delete();
+            }
+            rows = new RandomAccessFile(path,"rw");
             rows.seek(0);
+            numOtherFields = fL.length;
             
+            rows.writeInt(numOtherFields);
+            otherFieldLengths = new int[numOtherFields];
+            for(int i = 0; i < numOtherFields;i++) {
+                otherFieldLengths[i] = fL[i];
+                rows.writeInt(fL[i]);
+            }
+            tree = new BTree(filename+"_tree",bsize);
+            free = 0;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -47,6 +100,22 @@ public class DBTable {
     
     public DBTable(String filename) { 
     //Use this constructor to open an existing DBTable
+      
+        try {
+            rows = new RandomAccessFile(filename,"rw");
+            rows.seek(0);
+            
+            numOtherFields = rows.readInt();
+            otherFieldLengths = new int[numOtherFields];
+            
+            for(int i = 0; i < numOtherFields; i++) {
+                otherFieldLengths[i] = rows.readInt();
+            }
+            free = rows.readLong();
+            tree = new BTree(filename+"_tree");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     } 
     public boolean insert(int key, char fields[][]) { 
     //PRE: the length of each row is fields matches the expected length 
@@ -56,7 +125,16 @@ public class DBTable {
        The method must use the B+tree to determine if a row with the key exists. 
        If the row is added the key is also added into the B+tree. 
     */ 
-        return false;
+        if(tree.search(key) != 0) {
+            return false;
+        }
+        long newAddr = getFree();
+        tree.insert(key, newAddr);
+        
+        Row r = new Row(key, fields,newAddr);
+        r.writeRow();
+        
+        return true;
     } 
     
     public boolean remove(int key) { 
@@ -76,9 +154,49 @@ public class DBTable {
        The string values in the list should not include the null characters. 
        If a row with the key is not found return an empty list 
        The method must use the equality search in B+Tree
-    */ 
-        return null;
+    */
+        long dbAddr = tree.search(key);
+        if(dbAddr == 0) {
+            return null;
+        }
+        
+        LinkedList<String> list = new LinkedList<String>();
+        
+        Row r = new Row(dbAddr);
+        
+        for(int i = 0; i < numOtherFields; i++) {
+            String str = "";
+            for (int j = 0; j < otherFieldLengths[i]; j++) {
+                if(r.otherFields[i][j] == '\0') {
+                    break;
+                }
+                str += r.otherFields[i][j];
+            }
+            list.add(str);
+        }
+        
+        return list;
     }
+    
+    private long getFree() {
+        long addr = 0;
+        //When at the end of free, write to the end of file.
+        try {
+            if (free == 0) {
+                addr = rows.length();
+            } else {
+                //New address is where free is pointing
+                addr = free;
+                //Move free value to next in list.
+                rows.seek(free);
+                free = rows.readLong();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return addr;
+    }
+    
     public LinkedList<LinkedList<String>> rangeSearch(int low, int high) {  
     //PRE: low <= high 
     /* 
@@ -92,8 +210,17 @@ public class DBTable {
     public void print() { 
     //Print the rows to standard output is ascending order (based on the keys) 
     //One row per line 
+        
     } 
     public void close() { 
-    //close the DBTable. The table should not be used aler it is closed 
+    //close the DBTable. The table should not be used alter it is closed 
+        try {
+            rows.seek(4 * (numOtherFields + 1));
+            rows.writeLong(free);
+            tree.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     } 
+        
 } 

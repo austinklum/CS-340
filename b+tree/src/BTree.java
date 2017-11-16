@@ -487,15 +487,6 @@ public BTree(String filename) {
     */ 
         return null;
     }
-    /**
-     * <pre>PRE: There is room for the new key and child.
-     * POST: New key and child are inserted and ordering is maintained.</pre>
-     * Inserts and maintains a new key and child into asc order
-     * 
-     * @param r Node to add to
-     * @param k Key to add
-     * @param addr Address of child
-     */
     private long getFree() {
         long addr = 0;
         //When at the end of free, write to the end of file.
