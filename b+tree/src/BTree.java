@@ -262,7 +262,6 @@ private class BTreeNode {
            count = callerNewCount*-1;
        } else {
            count = callerNewCount;  
-           newCount++;
            //When splitting a non-leaf, we dont care about the smallest value
        }
        long link = children[order-1];
@@ -273,6 +272,9 @@ private class BTreeNode {
        long[] childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount-1, splitNode.children.length),order);
        if(splitNode.isLeaf()) {
            newCount*=-1;
+       } else {
+           // When splitting a nonleaf we need to start 1 place over when copying address.
+           childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount, splitNode.children.length),order);
        }
        //Maintain LinkedList and add a new node
        childrenArr[order-1] = link;
@@ -398,7 +400,17 @@ public BTree(String filename) {
                 //Who's address do I give you?
                 BTreeNode newnode = new BTreeNode(1,keys,children,getFree());
                 root = newnode.addr;
+                
+                BTreeNode rightNode = new BTreeNode(loc);
+                if(!rightNode.isLeaf()) {
+                    for(int i = 0; i < rightNode.count; i++) {
+                        rightNode.keys[i] = rightNode.keys[i + 1];
+                    }
+                    rightNode.count--;
+                }
+                
                 newnode.writeNode();
+                rightNode.writeNode();
             }
             
         }
