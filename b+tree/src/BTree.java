@@ -175,27 +175,31 @@ private class BTreeNode {
        } else {
            count++;
        }
+       //n will be our count
        int n = Math.abs(count);
        
-             
+       //Put our new key at the end of keys
        keys[n-1] = k;
+       
+       //If its not a leaf, put children at the last place in children.
+       //We may have overwrote the last value otherwise
        if(!isLeaf()) {
            children[n] = addr;
-       }else {
+       } else { //Then put it at the second to last place in children
            children[n-1] = addr;
        }
-      // System.out.println(keys[n-1]);
        
        int max = keys[n-2] > k ? keys[n-2] : k;
        long[] hash = new long[++max];
-      // System.out.println(max);
        
        //Save a 'hash' table of all the associated children addrs
        if(!isLeaf()) {
+           //When its not a leaf, we know that children[0] should not be touched.
            for(int i = 0; i < n; i++) {
                hash[keys[i]] = children[i + 1];
            }
        } else {
+           //Its a leaf, we might have a new smallest key/ child
            for(int i = 0; i < n; i++) {
                hash[keys[i]] = children[i];
            }
@@ -258,13 +262,15 @@ private class BTreeNode {
            count = callerNewCount*-1;
        } else {
            count = callerNewCount;  
+           newCount++;
+           //When splitting a non-leaf, we dont care about the smallest value
        }
        long link = children[order-1];
        keys = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, 0, Math.abs(count)),order-1);
-       children = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, 0, Math.abs(count)),order);
+       children = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, 0, Math.abs(count)+1),order);
        
        int[] keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length),order-1);
-       long[] childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount -1, splitNode.children.length),order);
+       long[] childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount-1, splitNode.children.length),order);
        if(splitNode.isLeaf()) {
            newCount*=-1;
        }
@@ -478,8 +484,6 @@ public BTree(String filename) {
      * @param k Key to add
      * @param addr Address of child
      */
-  
-    
     private long getFree() {
         long addr = 0;
         //When at the end of free, write to the end of file.
