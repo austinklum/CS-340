@@ -13,6 +13,7 @@ int blockSize;
 long root; 
 long free;
 Stack<BTreeNode> paths;
+int stopper = 0;
 //add instance variables as needed. 
 private class BTreeNode { 
    private int count;
@@ -273,18 +274,18 @@ private class BTreeNode {
        long[] childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount-1, splitNode.children.length),order);
        
        //When we have even orders, there will be overlap since the two nodes are of equal size after the split
-       if(order % 2 == 0) {
+       //OR When splitting a nonleaf we need to start 1 place over when copying address.
+       if(order % 2 == 0 || !splitNode.isLeaf()) {
            //This will copy the array starting 1 place over to the right
             keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount, splitNode.keys.length),order-1);
             childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount, splitNode.children.length),order);
+            newCount--;
        }
        
        if(splitNode.isLeaf()) {
            newCount*=-1;
-       } else {
-           // When splitting a nonleaf we need to start 1 place over when copying address.
-           childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount, splitNode.children.length),order);
-       }
+       } 
+       
        //Maintain LinkedList and add a new node
        childrenArr[order-1] = link;
        BTreeNode newnode = new BTreeNode(newCount,keyArr,childrenArr,getFree());
@@ -382,6 +383,9 @@ public BTree(String filename) {
             
             while (!paths.empty() && split) {
                 BTreeNode node = paths.pop();
+                if(node.addr == 440) {
+                    System.out.println("There shes goes!");
+                }
                 if(node.hasRoom()) {
                   //  insert  val and loc into    node   
                     node.insertEntry(val, loc);
@@ -396,6 +400,9 @@ public BTree(String filename) {
                     val = newnode.keys[0];
                     loc = newnode.addr;
                     split = true;
+                    if(val == 740) {
+                        System.out.println("Waat!");
+                    }
                 }
             }//End while
             if (split) { //Then root was split
@@ -423,8 +430,7 @@ public BTree(String filename) {
                 newnode.writeNode();
                 rightNode.writeNode();
             }
-            
-        }
+      }
         
         return !inTable;
     } 
@@ -461,18 +467,20 @@ public BTree(String filename) {
             System.out.println("Root is zero!");
             return 0;
         }
-        
+       
         //Logic to follow search path and bring me to a leaf
         while(!r.isLeaf()) {
             for(i = 0; i <= Math.abs(r.count); i++) {
               //k is larger than everything else, look at last node
                 if (i == Math.abs(r.count)) {
                     r = new BTreeNode(r.children[i]);
+                    System.out.println("Added:\n" + r);
                     paths.push(r);
                     break;
                 //Will look at the first node that is greater than k
                 } else if (k < r.keys[i]) {
                     r = new BTreeNode(r.children[i]);
+                    System.out.println("Added:\n" + r);
                     paths.push(r);
                     break;
                 }  
@@ -496,6 +504,7 @@ public BTree(String filename) {
        return a list of row addresses for all keys in the range low to high inclusive 
        return an empty list when no keys are in the range 
     */ 
+        
         return null;
     }
     private long getFree() {
@@ -568,11 +577,17 @@ public BTree(String filename) {
 //        tree.insert(180, 582);
 //        //This will split our root. If this works, we should be set.
 //        tree.insert(170, 612);
-//
+//        //I need 18 values
+//        tree.insert(60, 655);
+//        tree.insert(82, 676);
+//        tree.insert(105, 707);
+//        tree.insert(95, 737);
+//        tree.insert(99, 777);
+//        tree.insert(109, 801);
 //
 //        tree.print();
 //        tree.close();
-//       // System.out.println(tree.search(100));
+////       // System.out.println(tree.search(100));
 //    }
-    
+//    
 } 
