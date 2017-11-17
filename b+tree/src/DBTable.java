@@ -148,6 +148,9 @@ public class DBTable {
         if(tree.search(key) != 0) {
             return false;
         }
+        if(key == 30) {
+            System.out.println("YUP!");
+        }
         long newAddr = getFree();
         tree.insert(key, newAddr);
         
@@ -175,6 +178,9 @@ public class DBTable {
        If a row with the key is not found return an empty list 
        The method must use the equality search in B+Tree
     */
+        if(key == 30) {
+            System.out.println("I see you! Stop lying to me!");
+        }
         long dbAddr = tree.search(key);
         if(dbAddr == 0) {
             return null;

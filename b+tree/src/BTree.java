@@ -223,7 +223,7 @@ private class BTreeNode {
        }
        if(!isLeaf()) {
        //re do the children array to match the key array
-           System.out.println("Adding to non-leaf node : " + toString());
+           //System.out.println("Adding to non-leaf node : " + toString());
            for (int i = 0; i < n; i++) {
                children[i + 1] = hash[keys[i]];
            }
@@ -261,7 +261,7 @@ private class BTreeNode {
            count = callerNewCount;  
            //When splitting a non-leaf, we dont care about the smallest value
        }
-       System.out.println("Order " + order + " tree. The callerCount is " + callerNewCount + " and newCount is " + newCount);
+       //System.out.println("Order " + order + " tree. The callerCount is " + callerNewCount + " and newCount is " + newCount);
        //Link will be copied into the last child addr for leaves so we can keep the linked list behavior
        long link = children[order-1];
       
@@ -273,13 +273,37 @@ private class BTreeNode {
        int[] keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length),order-1);
        long[] childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount-1, splitNode.children.length),order);
        
-       //When we have even orders, there will be overlap since the two nodes are of equal size after the split
-       //OR When splitting a nonleaf we need to start 1 place over when copying address.
+//       //When we have even orders, there will be overlap since the two nodes are of equal size after the split
+//       //OR When splitting a nonleaf we need to start 1 place over when copying address.
+//       if(order % 2 == 0 || !splitNode.isLeaf()) {
+//         //This will copy the array starting 1 place over to the right
+//           keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount, splitNode.keys.length),order-1);
+//           childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount, splitNode.children.length),order);
+//           
+//           //Since sometimes even orders have non-leaves, we need to shift yet another time over to the right
+//           if(order % 2 == 0 && !splitNode.isLeaf()) {
+//               keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, 1 + newCount, splitNode.keys.length),order-1);
+//               childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, 1 + newCount, splitNode.children.length),order);
+//               //We'll end up with a count too large, so decrement it.
+//               newCount--;
+//           //We'll end up with a count too large, so decrement it.
+//           //Case when its an odd order but is a non-leaf
+//           }  else if (order % 2 == 1 && !splitNode.isLeaf()) {
+//               newCount--;
+//           }
+//           
+//       }
+//       
+       
+       
        if(order % 2 == 0 || !splitNode.isLeaf()) {
            //This will copy the array starting 1 place over to the right
             keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount, splitNode.keys.length),order-1);
             childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount, splitNode.children.length),order);
-            newCount--;
+            if(order % 2 == 1) {
+                newCount--;
+            }
+            
        }
        
        if(splitNode.isLeaf()) {
@@ -383,9 +407,6 @@ public BTree(String filename) {
             
             while (!paths.empty() && split) {
                 BTreeNode node = paths.pop();
-                if(node.addr == 440) {
-                    System.out.println("There shes goes!");
-                }
                 if(node.hasRoom()) {
                   //  insert  val and loc into    node   
                     node.insertEntry(val, loc);
@@ -474,13 +495,11 @@ public BTree(String filename) {
               //k is larger than everything else, look at last node
                 if (i == Math.abs(r.count)) {
                     r = new BTreeNode(r.children[i]);
-                    System.out.println("Added:\n" + r);
                     paths.push(r);
                     break;
                 //Will look at the first node that is greater than k
                 } else if (k < r.keys[i]) {
                     r = new BTreeNode(r.children[i]);
-                    System.out.println("Added:\n" + r);
                     paths.push(r);
                     break;
                 }  
