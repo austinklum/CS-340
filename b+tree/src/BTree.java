@@ -87,7 +87,7 @@ private class BTreeNode {
    @Override
    public String toString() {
        String str = Long.toString(addr);
-       str += " : " + count;
+       str += " : " + count + " |";
        for (int key : keys) {
            str += " " + key;
        }
@@ -242,11 +242,7 @@ private class BTreeNode {
     */
    private BTreeNode split(int key, long addr) {
        //Make a new temp node that is 1 bigger than normal nodes
-//       if(isLeaf()) {
-//           count--;
-//       } else {
-//           count++;
-//       }
+       
          BTreeNode splitNode = new BTreeNode(count, Arrays.copyOf(keys, order),Arrays.copyOf(children, order+1), this.addr);
        
        //Add the new entry to it
@@ -264,12 +260,25 @@ private class BTreeNode {
            count = callerNewCount;  
            //When splitting a non-leaf, we dont care about the smallest value
        }
+       System.out.println("Order " + order + " tree. The callerCount is " + callerNewCount + " and newCount is " + newCount);
+       //Link will be copied into the last child addr for leaves so we can keep the linked list behavior
        long link = children[order-1];
+      
+       //Get the new values for the caller. arr[0] to arr[count]
        keys = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, 0, Math.abs(count)),order-1);
        children = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, 0, Math.abs(count)+1),order);
        
+       //Get the new values for the new node. Starting at the middle until the end.
        int[] keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length),order-1);
        long[] childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount-1, splitNode.children.length),order);
+       
+       //When we have even orders, there will be overlap since the two nodes are of equal size after the split
+       if(order % 2 == 0) {
+           //This will copy the array starting 1 place over to the right
+            keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount, splitNode.keys.length),order-1);
+            childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount, splitNode.children.length),order);
+       }
+       
        if(splitNode.isLeaf()) {
            newCount*=-1;
        } else {
@@ -397,10 +406,12 @@ public BTree(String filename) {
                 children[0] = root;
                 children[1] = loc;
                 
-                //Who's address do I give you?
+                //Create a new root 
                 BTreeNode newnode = new BTreeNode(1,keys,children,getFree());
                 root = newnode.addr;
                 
+                //Our right most child gets out of whack
+                //This code block helps maintain it.
                 BTreeNode rightNode = new BTreeNode(loc);
                 if(!rightNode.isLeaf()) {
                     for(int i = 0; i < rightNode.count; i++) {
@@ -534,34 +545,34 @@ public BTree(String filename) {
         }
     } 
     
-    public static void main(String[] args) {
-        BTree tree = new BTree("tree", 60);
-        System.out.println("I got this far!");
-        //long addr = tree.search(75);
-       // System.out.println(addr);
-        tree.insert(110,32);
-        tree.insert(50, 24);
-        tree.insert(75, 64);
-        tree.insert(130, 48);
-        tree.insert(150, 128);
-        tree.insert(120, 255);
-       
-        tree.insert(20, 272);
-        tree.insert(100, 316);
-        tree.insert(160, 353);
-        tree.insert(5, 420);
-        tree.insert(112, 456);
-        tree.insert(123, 495);
-        tree.insert(125, 535);
-        //At this point we have M-1 keys in the root and M children
-        tree.insert(180, 582);
-        //This will split our root. If this works, we should be set.
-        tree.insert(170, 612);
-
-
-        tree.print();
-        tree.close();
-       // System.out.println(tree.search(100));
-    }
+//    public static void main(String[] args) {
+//        BTree tree = new BTree("tree", 60);
+//        System.out.println("I got this far!");
+//        //long addr = tree.search(75);
+//       // System.out.println(addr);
+//        tree.insert(110,32);
+//        tree.insert(50, 24);
+//        tree.insert(75, 64);
+//        tree.insert(130, 48);
+//        tree.insert(150, 128);
+//        tree.insert(120, 255);
+//       
+//        tree.insert(20, 272);
+//        tree.insert(100, 316);
+//        tree.insert(160, 353);
+//        tree.insert(5, 420);
+//        tree.insert(112, 456);
+//        tree.insert(123, 495);
+//        tree.insert(125, 535);
+//        //At this point we have M-1 keys in the root and M children
+//        tree.insert(180, 582);
+//        //This will split our root. If this works, we should be set.
+//        tree.insert(170, 612);
+//
+//
+//        tree.print();
+//        tree.close();
+//       // System.out.println(tree.search(100));
+//    }
     
 } 

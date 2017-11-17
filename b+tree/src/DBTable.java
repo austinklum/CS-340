@@ -37,7 +37,7 @@ public class DBTable {
                 for(int i = 0; i < numOtherFields; i++) {
                     otherFields[i] = new char[otherFieldLengths[i]];
                     for(int j = 0; j < otherFields[i].length;j++) {
-                        otherFields[i][j] = rows.readChar();;
+                        otherFields[i][j] = rows.readChar();
                     }
                 }
             } catch (IOException e) {
@@ -58,7 +58,27 @@ public class DBTable {
                 e.printStackTrace();
             }
         }
-       
+     
+        public String toString() {
+            String str = Integer.toString(keyField) + " ";
+            for(int i = 0; i < numOtherFields; i++) {
+                for(int j = 0; j < otherFieldLengths[i]; j++) {
+                    try {
+                        char temp = rows.readChar();
+                        if(temp == '\0') {
+                            //Do nothing
+                        }
+                        str += temp;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                str += " ";
+            }
+            
+            return str;
+        }
+        
     }
     
     public DBTable(String filename, int fL[], int bsize ) { 
@@ -210,12 +230,25 @@ public class DBTable {
     public void print() { 
     //Print the rows to standard output is ascending order (based on the keys) 
     //One row per line 
+//        try {
+//            rows.seek(4 * (numOtherFields + 3));
+//            System.out.println("I started look at " + (4*(numOtherFields + 3)));
+//            while (rows.getFilePointer() < rows.length()) {
+//             Row r = new Row(rows.getFilePointer());
+//             System.out.println(r);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        tree.print();
         
     } 
     public void close() { 
     //close the DBTable. The table should not be used alter it is closed 
         try {
+            //Get to the location of the free address
             rows.seek(4 * (numOtherFields + 1));
+            System.out.println("I wrote out free at " + (4*(numOtherFields + 1)));
             rows.writeLong(free);
             tree.close();
         } catch (IOException e) {
