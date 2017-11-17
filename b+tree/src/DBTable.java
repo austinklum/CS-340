@@ -179,7 +179,7 @@ public class DBTable {
        The method must use the equality search in B+Tree
     */
         if(key == 30) {
-            System.out.println("I see you! Stop lying to me!");
+          //  System.out.println("I see you! Stop lying to me!");
         }
         long dbAddr = tree.search(key);
         if(dbAddr == 0) {

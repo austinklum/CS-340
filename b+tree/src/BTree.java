@@ -14,6 +14,7 @@ long root;
 long free;
 Stack<BTreeNode> paths;
 int stopper = 0;
+int mid;
 //add instance variables as needed. 
 private class BTreeNode { 
    private int count;
@@ -297,6 +298,7 @@ private class BTreeNode {
        
        
        if(order % 2 == 0 || !splitNode.isLeaf()) {
+           mid = keyArr[0];
            //This will copy the array starting 1 place over to the right
             keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount, splitNode.keys.length),order-1);
             childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount, splitNode.children.length),order);
@@ -371,6 +373,7 @@ public BTree(String filename) {
        return true if the key is added 
        return false if the key is a duplicate 
     */ 
+        System.out.println("Inserting " + key + " at DB: " + addr);
         if (root == 0) {
             System.out.println("Inserted a new root!");
             insertRoot(key,addr);
@@ -416,14 +419,21 @@ public BTree(String filename) {
                     split = false;
                 } else {
                     BTreeNode newnode = node.split(val, loc);
+                    val = mid;
+                    loc = newnode.addr;
+//                    if(newnode.isLeaf()) {
+//                        for(int i = 0; i < order-1; i++) {
+//                            newnode.keys[i+1] = newnode.keys[i];
+//                        }
+//                        for(int i = 0; i < order; i++) {
+//                            newnode.children[i+1] = newnode.children[i];
+//                        }
+//                        newnode.count--;
+//                    }
                     node.writeNode();
                     newnode.writeNode();
-                    val = newnode.keys[0];
-                    loc = newnode.addr;
+                   
                     split = true;
-                    if(val == 740) {
-                        System.out.println("Waat!");
-                    }
                 }
             }//End while
             if (split) { //Then root was split
@@ -440,19 +450,20 @@ public BTree(String filename) {
                 
                 //Our right most child gets out of whack
                 //This code block helps maintain it.
-                BTreeNode rightNode = new BTreeNode(loc);
-                if(!rightNode.isLeaf()) {
-                    for(int i = 0; i < rightNode.count; i++) {
-                        rightNode.keys[i] = rightNode.keys[i + 1];
-                    }
-                    rightNode.count--;
-                }
+//                BTreeNode rightNode = new BTreeNode(loc);
+//                if(!rightNode.isLeaf()) {
+//                    for(int i = 0; i < rightNode.count; i++) {
+//                        rightNode.keys[i] = rightNode.keys[i + 1];
+//                    }
+//                    rightNode.count--;
+//                }
                 
                 newnode.writeNode();
-                rightNode.writeNode();
+                //rightNode.writeNode();
             }
       }
-        
+        print();
+        System.out.println("   ***   ");
         return !inTable;
     } 
     private void insertRoot(int key, long addr) {
