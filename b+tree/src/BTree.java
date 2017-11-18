@@ -5,6 +5,9 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Stack;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 public class BTree { 
 RandomAccessFile f; 
@@ -87,31 +90,62 @@ private class BTreeNode {
    }
    
    private boolean isTooSmall() {
+       int min = minKeys();
        return Math.abs(count) < minKeys();
    }
    
    private int minKeys() {
-       return (int)(Math.ceil(order/2)-1);
+       return (int)(Math.ceil(order/2));
+   }
+   
+   /**
+    * <Pre>PRE: key is in tree</pre>
+    * Parent of the key should call this method<br>
+    * Returns a positive or negative number n:<br>
+    * -n : Left Neighbor <br>
+    *  0 : Can't Borrow <br>
+    *  n : Right Neighbor <br>
+    * 
+    * @param key key to look for
+    * @return -n, 0, n
+    */
+   private long borrowFrom(int key) {
+       BTreeNode r = searchToLeaf(key);
+       //Look for key. Look at k-1 and k+1. If count > min children then return true
+       int i = 0;
+       for(i = 0; i < Math.abs(count); i++) {
+           if (key == r.keys[i]) {
+               break;
+           }
+       }
+       
+       /* Status Meaning
+        * -n : Left Neighbor
+        *  0 : Can't Borrow
+        *  n : Right Neighbor
+        */
+       long status = 0;
+       
+       //We borrow from the right
+       if(Math.abs(new BTreeNode(children[i]).count) > minKeys()) {
+           status = children[i + 1];
+       // When looking at the first key, there is no left neighbor
+       } else if(i != 0 && Math.abs(new BTreeNode(children[i-1]).count) > minKeys()) {
+           status = children[i - 1]*-1;
+       }
+       
+       if(r.isLeaf()) {
+           count++;
+       }else {
+           count--;
+       }
+       
+     //NOTE: When left and right can both be borrowed from, we'll choose the left neighbor
+       return status;
    }
    
    private boolean canBorrow(int key) {
-       //Look for key. Look at k-1 and k+1. If count > min children then return true
-       int i = findKeyIndex(key);
-       
-       //In case we couldn't find it.
-       if(i != -1) {
-           BTreeNode r = new BTreeNode(children[i+1]);
-           BTreeNode l = r;
-           
-           // When looking at the first key, there is no left neighbor
-           if( i != 0 ) {
-               l = new BTreeNode(children[i-1]);
-           }
-           
-           //If left neighbor or right neighbor have more than minKeys() then we can borrow.
-           return Math.abs(l.count) > minKeys() || Math.abs(r.count) > minKeys();
-       }
-       return false;
+       return borrowFrom(key) != 0;
    }
    
    private int findKeyIndex(int k) {
@@ -272,6 +306,19 @@ private class BTreeNode {
        }
    }
    
+   private void removeEntry(int key) {
+       for(int j = findKeyIndex(key); j < Math.abs(count)-1; j++) {
+           keys[j] = keys[j+1];
+           children[j] = children[j+1];
+       }
+       
+       if(isLeaf()) {
+           count++;
+       } else {
+           count--;
+       }
+   }
+   
    /**
     * This method will split a node into 2 parts. <br>
     * Returns the new part and modifies the caller
@@ -284,9 +331,10 @@ private class BTreeNode {
        
          BTreeNode splitNode = new BTreeNode(count, Arrays.copyOf(keys, order),Arrays.copyOf(children, order+1), this.addr);
        
-       //Add the new entry to it
-       splitNode.insertEntry(key,addr);
-      
+       if(key != -1 && addr != -1) {
+           //Add the new entry to it
+           splitNode.insertEntry(key,addr);
+       }
        //Determine the count of the new node. ??? Maybe use count field instead?
       int newCount = (int) Math.ceil((double)splitNode.keys.length/2);
       
@@ -356,22 +404,90 @@ private class BTreeNode {
        
        return newnode;
    }
-    public boolean borrow(int key) {
-        //Look for key. Look at k-1 and k+1. If count > min children then return true
-        int i = findKeyIndex(key);
-        
-        //In case we couldn't find it.
-        if(i != -1) {
-            BTreeNode r = new BTreeNode(children[i+1]);
-            BTreeNode l = r;
+   
+//   private BTreeNode share() {
+//       //Determine the count of the new node.
+//       int newCount = (int) Math.ceil((double)keys.length/2);
+//       
+//        //split   the values  (including  k)  between node  and the newnode
+//        //Update the caller //splitnode.count - newCount
+//        int callerNewCount = Math.abs(count) + 1 - newCount;
+//        if(isLeaf()) {
+//            count = callerNewCount*-1;
+//        } else {
+//            count = callerNewCount;  
+//        }
+//        
+//        //Need to make a node that contain the other half.
+//   }
+   
+    private void borrow(BTreeNode r, int key) {
+        long status = r.borrowFrom(key);
+        BTreeNode neighbor = null;
+        //Borrow from left
+        if(status < 0) {
+            neighbor = new BTreeNode(status*-1);
             
-            // When looking at the first key, there is no left neighbor
-            if( i != 0 ) {
-                l = new BTreeNode(children[i-1]);
+            int splitCount = (int) Math.ceil((double)(Math.abs(neighbor.count)-minKeys())/2);
+            
+            for(int i = 0; i < splitCount; i++) {
+                insertEntry(neighbor.keys[minKeys() + i],neighbor.children[minKeys()+1]);
             }
-        } 
-        return false;
+            for(int i = 0; i < splitCount; i++) {
+                neighbor.removeEntry(neighbor.keys[minKeys() + i]);
+            }
+//            BTreeNode cupOfSugar = new BTreeNode(neighbor.count, 
+//                    Arrays.copyOfRange(neighbor.keys, minKeys(), Math.abs(neighbor.count)), 
+//                    Arrays.copyOfRange(neighbor.children, minKeys()+1, order), 
+//                    -1);
+//            
+//           BTreeNode cupOfFlour = cupOfSugar.share();
+//           
+//           //Add new keys into child
+//           keys = IntStream.concat(
+//                   Arrays.stream(Arrays.copyOfRange(neighbor.keys,minKeys(),Math.abs(neighbor.count))),
+//                   Arrays.stream(cupOfFlour.keys))
+//                   .toArray();
+//           
+//           //Add new children into child
+//           children =  LongStream.concat(
+//                   Arrays.stream( Arrays.copyOfRange(neighbor.children,minKeys()+1,Math.abs(neighbor.count)+1)),
+//                   Arrays.stream(cupOfFlour.children))
+//                   .toArray();
+//                   
+//            //Add min keys and cupOfSugar.keys
+//            neighbor.keys = IntStream.concat(
+//                    Arrays.stream( Arrays.copyOfRange(neighbor.keys,0,minKeys())),
+//                    Arrays.stream(cupOfSugar.keys))
+//                    .toArray();
+//            
+//            //add min children and cupOfSugar.children
+//            neighbor.children = LongStream.concat(
+//                    Arrays.stream( Arrays.copyOfRange(neighbor.children,0,minKeys()+1)),
+//                    Arrays.stream(cupOfSugar.children))
+//                    .toArray();
             
+        //Borrow from right
+        } else {
+           neighbor = new BTreeNode(status);
+           int splitCount = (int) Math.ceil((double)(Math.abs(neighbor.count)-minKeys())/2);
+           //If its a leaf take the immdediant child
+           //Its its a nonleaf take the next child
+           for(int i = 0; i < splitCount; i++) {
+               insertEntry(neighbor.keys[minKeys() + i],neighbor.children[minKeys()+1]);
+           }
+           for(int i = 0; i < splitCount; i++) {
+               neighbor.removeEntry(neighbor.keys[minKeys() + i]);
+           }
+          // BTreeNode cupOfSugar = new BTreeNode(neighbor.count, Arrays.copyOfRange(neighbor.keys, 0, order - minKeys()), Arrays.copyOfRange(neighbor.children, 0, order-minKeys()+1), -1);
+          // int[] nkeys = Arrays.copyOfRange(neighbor.keys, order-minKeys()-1, );
+        }
+        //create a node that doesn't use the first min keys
+        //split that node, give the smaller half back to node
+        //take the larger half and give it to the child
+        neighbor.writeNode();
+        writeNode();
+        
     }
 
 }  
@@ -544,7 +660,8 @@ public BTree(String filename) {
 //        if  k   is  in  node   
         //key will always be in the node at this point, If it wasn't I would've return earlier.
 //        remove  it  
-        
+        r.removeEntry(key);
+        r.writeNode();
 //        if  the node    has too few keys    set tooSmall    =   true   
         tooSmall = r.isTooSmall();
 //        while   (!path.empty()  &&  tooSmall)   {   
@@ -556,7 +673,7 @@ public BTree(String filename) {
             if(r.canBorrow(key)) {
 //                shift    values  between the children    and adjust  the key 
 //                in  node    that    is  between the nodes   involved    in  the borrowing  
-               // child.borrow(r);
+                child.borrow(r,key);
                 tooSmall = false;
             } else {
 //                combine child   with    a   neighbor    and remove  the key in  
@@ -575,7 +692,6 @@ public BTree(String filename) {
     } 
     
     private BTreeNode searchToLeaf(int k) {
-        paths = new Stack<>();
         int i = 0;
         BTreeNode r = new BTreeNode(root);
         paths.push(r);
@@ -608,6 +724,7 @@ public BTree(String filename) {
        If the key is found return the address of the row with the key 
        otherwise return 0  
     */ 
+        paths = new Stack<>();
         BTreeNode r = searchToLeaf(k);
         if(root == 0) {
             return 0;
@@ -630,6 +747,7 @@ public BTree(String filename) {
        return a list of row addresses for all keys in the range low to high inclusive 
        return an empty list when no keys are in the range 
     */ 
+        paths = new Stack<>();
         LinkedList<Long> list = new LinkedList<>();
         BTreeNode r = searchToLeaf(low);
         int i = 0;
@@ -695,17 +813,20 @@ public BTree(String filename) {
         }
     } 
     
-//    public static void main(String[] args) {
-//        BTree tree = new BTree("tree", 60);
+    public static void main(String[] args) {
+        BTree tree = new BTree("tree", 60);
 //        System.out.println("I got this far!");
 //        //long addr = tree.search(75);
 //       // System.out.println(addr);
-//        tree.insert(110,32);
-//        tree.insert(50, 24);
-//        tree.insert(75, 64);
-//        tree.insert(130, 48);
-//        tree.insert(150, 128);
-//        tree.insert(120, 255);
+        tree.insert(110,32);
+        tree.insert(50, 24);
+        tree.insert(75, 64);
+        tree.insert(130, 48);
+        tree.insert(150, 128);
+        tree.insert(30, 255);
+        tree.remove(150);
+        tree.print();
+        tree.remove(130);
 //       
 //        tree.insert(20, 272);
 //        tree.insert(100, 316);
@@ -726,9 +847,9 @@ public BTree(String filename) {
 //        tree.insert(99, 777);
 //        tree.insert(109, 801);
 //
-//        tree.print();
-//        tree.close();
-////       // System.out.println(tree.search(100));
-//    }
+        tree.print();
+        tree.close();
+//       // System.out.println(tree.search(100));
+    }
 //    
 } 
