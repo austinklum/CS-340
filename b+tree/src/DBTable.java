@@ -231,7 +231,7 @@ public class DBTable {
     */
         LinkedList<LinkedList<String>> list = new LinkedList<LinkedList<String>>();
         
-        for (Long addr : tree.rangeSearch(low, high)) {
+        for (long addr : tree.rangeSearch(low, high)) {
             list.add(getFields(new LinkedList<>(),addr));
         }
         

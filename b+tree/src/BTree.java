@@ -86,6 +86,43 @@ private class BTreeNode {
        return Math.abs(count) < order - 1;
    }
    
+   private boolean isTooSmall() {
+       return Math.abs(count) < minKeys();
+   }
+   
+   private int minKeys() {
+       return (int)(Math.ceil(order/2)-1);
+   }
+   
+   private boolean canBorrow(int key) {
+       //Look for key. Look at k-1 and k+1. If count > min children then return true
+       int i = findKeyIndex(key);
+       
+       //In case we couldn't find it.
+       if(i != -1) {
+           BTreeNode r = new BTreeNode(children[i+1]);
+           BTreeNode l = r;
+           
+           // When looking at the first key, there is no left neighbor
+           if( i != 0 ) {
+               l = new BTreeNode(children[i-1]);
+           }
+           
+           //If left neighbor or right neighbor have more than minKeys() then we can borrow.
+           return Math.abs(l.count) > minKeys() || Math.abs(r.count) > minKeys();
+       }
+       return false;
+   }
+   
+   private int findKeyIndex(int k) {
+       for(int i = 0; i < Math.abs(count); i++) {
+           if (k == keys[i]) {
+               return i;
+           }
+       }
+       return -1;
+   }
+   
    @Override
    public String toString() {
        String str = Long.toString(addr);
@@ -319,6 +356,24 @@ private class BTreeNode {
        
        return newnode;
    }
+    public boolean borrow(int key) {
+        //Look for key. Look at k-1 and k+1. If count > min children then return true
+        int i = findKeyIndex(key);
+        
+        //In case we couldn't find it.
+        if(i != -1) {
+            BTreeNode r = new BTreeNode(children[i+1]);
+            BTreeNode l = r;
+            
+            // When looking at the first key, there is no left neighbor
+            if( i != 0 ) {
+                l = new BTreeNode(children[i-1]);
+            }
+        } 
+        return false;
+            
+    }
+
 }  
 /* ************************************************
  * End of Node class
@@ -480,6 +535,42 @@ public BTree(String filename) {
        If  the key is in the Btree, remove the key and return the address of the row 
        return 0 if the key is not found in the B+tree
     */
+        boolean tooSmall = false;
+        if(0 == search(key)) {
+            return 0;
+        } 
+        
+        BTreeNode r = paths.pop();
+//        if  k   is  in  node   
+        //key will always be in the node at this point, If it wasn't I would've return earlier.
+//        remove  it  
+        
+//        if  the node    has too few keys    set tooSmall    =   true   
+        tooSmall = r.isTooSmall();
+//        while   (!path.empty()  &&  tooSmall)   {   
+        while (!paths.empty() && tooSmall) {
+            BTreeNode child = r; //the   node    that    is  too small   
+            r = paths.pop(); //the   parent  of  child 
+        
+//            check   the neighbors   of  child; the immediate left and right
+            if(r.canBorrow(key)) {
+//                shift    values  between the children    and adjust  the key 
+//                in  node    that    is  between the nodes   involved    in  the borrowing  
+               // child.borrow(r);
+                tooSmall = false;
+            } else {
+//                combine child   with    a   neighbor    and remove  the key in  
+ //               node    between the nodes involved    in  the combining   
+               // r.merge(child);
+                
+                //Check if r is still too small
+                tooSmall = r.isTooSmall();
+            }
+        }   
+        if(tooSmall) { //this mean the root is now empty
+           // set the root to the leftmost child of the empty root and free the space used by the old root
+        }
+        
         return 0;
     } 
     
@@ -519,18 +610,17 @@ public BTree(String filename) {
     */ 
         BTreeNode r = searchToLeaf(k);
         if(root == 0) {
-            System.out.println("Root is zero!");
             return 0;
         }
         long addr = 0;
-        //I am now at a leaf. Look at all the contents of the node.
-        for(int i = 0; i < Math.abs(r.count); i++) {
-            if (k == r.keys[i]) {
-                addr = r.children[i];
-                break;
-            }
-        }
         
+        //I am now at a leaf. Look at all the contents of the node.
+        int i = r.findKeyIndex(k);
+        
+        if(i != -1) {
+            addr = r.children[i];
+        }
+                
         return addr;
     } 
     public LinkedList<Long> rangeSearch(int low, int high) {
@@ -556,7 +646,6 @@ public BTree(String filename) {
                i = 0;
            }
        }
-        System.out.println("all done");
         return list;
     }
     private long getFree() {
