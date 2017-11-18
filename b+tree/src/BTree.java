@@ -373,7 +373,7 @@ public BTree(String filename) {
        return true if the key is added 
        return false if the key is a duplicate 
     */ 
-        System.out.println("Inserting " + key + " at DB: " + addr);
+        //System.out.println("Inserting " + key + " at DB: " + addr);
         if (root == 0) {
             System.out.println("Inserted a new root!");
             insertRoot(key,addr);
@@ -462,8 +462,8 @@ public BTree(String filename) {
                 //rightNode.writeNode();
             }
       }
-        print();
-        System.out.println("   ***   ");
+        //print();
+        //System.out.println("   ***   ");
         return !inTable;
     } 
     private void insertRoot(int key, long addr) {
@@ -483,23 +483,14 @@ public BTree(String filename) {
         return 0;
     } 
     
-    //Calling search will reset the paths stack. I don't forsee this being an issue
-    public long search(int k) { 
-    /* 
-       This is an equality search 
-       If the key is found return the address of the row with the key 
-       otherwise return 0  
-    */ 
+    private BTreeNode searchToLeaf(int k) {
         paths = new Stack<>();
         int i = 0;
         BTreeNode r = new BTreeNode(root);
         paths.push(r);
-        
         if(root == 0) {
-            System.out.println("Root is zero!");
-            return 0;
+            return r;
         }
-       
         //Logic to follow search path and bring me to a leaf
         while(!r.isLeaf()) {
             for(i = 0; i <= Math.abs(r.count); i++) {
@@ -516,9 +507,24 @@ public BTree(String filename) {
                 }  
             }
         }
+        return r;
+    }
+    
+    //Calling search will reset the paths stack. I don't forsee this being an issue
+    public long search(int k) { 
+    /* 
+       This is an equality search 
+       If the key is found return the address of the row with the key 
+       otherwise return 0  
+    */ 
+        BTreeNode r = searchToLeaf(k);
+        if(root == 0) {
+            System.out.println("Root is zero!");
+            return 0;
+        }
         long addr = 0;
         //I am now at a leaf. Look at all the contents of the node.
-        for(i = 0; i < Math.abs(r.count); i++) {
+        for(int i = 0; i < Math.abs(r.count); i++) {
             if (k == r.keys[i]) {
                 addr = r.children[i];
                 break;
@@ -534,8 +540,24 @@ public BTree(String filename) {
        return a list of row addresses for all keys in the range low to high inclusive 
        return an empty list when no keys are in the range 
     */ 
-        
-        return null;
+        LinkedList<Long> list = new LinkedList<>();
+        BTreeNode r = searchToLeaf(low);
+        int i = 0;
+       while (r.keys[i] < high) {
+           list.add(r.children[i]);
+           i++;
+           if (i == r.count*-1) {
+               if(r.children[order-1] == 0) {
+                   //We are at the end of the leaves
+                   break;
+               }
+               //Look to the next leaf
+               r = new BTreeNode(r.children[order-1]);
+               i = 0;
+           }
+       }
+        System.out.println("all done");
+        return list;
     }
     private long getFree() {
         long addr = 0;

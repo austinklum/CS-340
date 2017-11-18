@@ -148,9 +148,7 @@ public class DBTable {
         if(tree.search(key) != 0) {
             return false;
         }
-        if(key == 30) {
-            System.out.println("YUP!");
-        }
+        
         long newAddr = getFree();
         tree.insert(key, newAddr);
         
@@ -170,24 +168,7 @@ public class DBTable {
     */ 
         return false;
     } 
-     
-    public LinkedList<String> search(int key) { 
-    /* 
-       If a row with the key is found in the table return a list of the other fields in the row.  
-       The string values in the list should not include the null characters. 
-       If a row with the key is not found return an empty list 
-       The method must use the equality search in B+Tree
-    */
-        if(key == 30) {
-          //  System.out.println("I see you! Stop lying to me!");
-        }
-        long dbAddr = tree.search(key);
-        if(dbAddr == 0) {
-            return null;
-        }
-        
-        LinkedList<String> list = new LinkedList<String>();
-        
+    private LinkedList<String> getFields(LinkedList<String> list,long dbAddr) {
         Row r = new Row(dbAddr);
         
         for(int i = 0; i < numOtherFields; i++) {
@@ -200,8 +181,25 @@ public class DBTable {
             }
             list.add(str);
         }
-        
         return list;
+    }
+    
+    public LinkedList<String> search(int key) { 
+    /* 
+       If a row with the key is found in the table return a list of the other fields in the row.  
+       The string values in the list should not include the null characters. 
+       If a row with the key is not found return an empty list 
+       The method must use the equality search in B+Tree
+    */
+        long dbAddr = tree.search(key);
+        if(dbAddr == 0) {
+            return new LinkedList<String>();
+        }
+        
+        return getFields(new LinkedList<String>(), dbAddr);
+        
+        
+        
     }
     
     private long getFree() {
@@ -231,7 +229,13 @@ public class DBTable {
        If there are no rows with a key in the range return an empty list 
        The method must use the range search in B+Tree
     */
-       return null; 
+        LinkedList<LinkedList<String>> list = new LinkedList<LinkedList<String>>();
+        
+        for (Long addr : tree.rangeSearch(low, high)) {
+            list.add(getFields(new LinkedList<>(),addr));
+        }
+        
+       return list; 
     } 
     public void print() { 
     //Print the rows to standard output is ascending order (based on the keys) 
@@ -246,8 +250,8 @@ public class DBTable {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
+      // System.out.println(rangeSearch(0,Integer.MAX_VALUE));
         tree.print();
-        
     } 
     public void close() { 
     //close the DBTable. The table should not be used alter it is closed 
