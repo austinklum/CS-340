@@ -166,7 +166,15 @@ public class DBTable {
        
        If the row is deleted the key must be deleted from the B+Tree
     */ 
-        return false;
+        if(tree.search(key) != 0) {
+            return false;
+        }
+        
+       long retVal = tree.search(key);
+        tree.remove(key);
+        addFree(retVal);
+        
+        return true;
     } 
     private LinkedList<String> getFields(LinkedList<String> list,long dbAddr) {
         Row r = new Row(dbAddr);
@@ -219,6 +227,25 @@ public class DBTable {
             e.printStackTrace();
         }
         return addr;
+    }
+    
+    /**
+     * Puts the new address in free and puts free's old value into the new address
+     * 
+     * @param addr address of node to be added
+     * @throws IOException
+     */
+    private void addFree(long addr){
+        try {
+          //Seek to position to write to
+            rows.seek(addr);
+            //Write out old value of free
+            rows.writeLong(free);
+            //Set free to new value
+            free = addr;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     
     public LinkedList<LinkedList<String>> rangeSearch(int low, int high) {  

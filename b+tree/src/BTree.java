@@ -95,7 +95,9 @@ private class BTreeNode {
    }
    
    private boolean isTooSmall() {
-       int min = minKeys();
+       if(this.addr == root && this.count == 0) {
+           return true;
+       }
        return Math.abs(count) < minKeys();
    }
    
@@ -178,75 +180,6 @@ private long borrowFrom(BTreeNode unchanged, int key) {
    }
    
    private void insertEntry(int k, long addr) {
-//       int i = Math.abs(count)-1;
-//       int j = Math.abs(count)-1;
-//       
-//     //  The guide leaves need to be offset by 1.
-//       if(!isLeaf()) {
-//           j++;
-//       }
-//       //Case that k is greater than everything
-//       if (k > keys[i]) {
-//           i++;
-//           j++;
-//       } else {
-//           while(i > 0 && i < Math.abs(count) && k < keys[i]) {
-//               //We know there is room for the node. So I cant index out of bounds
-//               //start at end of count
-//               //While k > r.keys
-//               //shift k[i] to k[i+1]
-//               
-//           /* --VISUAL-- 
-//            * key = 5, Order = 5
-//            * [1][6][10][?] 
-//            * Shift -> [1][6][10][10] -> [1][6][6][10] -> [1][5][6][10]
-//            */
-//               keys[i+1] = keys[i];
-//               children[j+1] = children[j];
-//               i--;
-//               j--;
-//           }
-//           //Case that k is either that smallest or second smallest
-//           if (i == 0) { 
-//               //K must be the smallest 
-//               if(k < keys[i]) {
-//                   keys[i+1] = keys[i];
-//                   children[j+1] = children[j];
-//                   
-//               //Second smallest
-//               } else {
-//                   i++;
-//                   j++;
-//               }
-//           }
-//       }
-//       //Put the new key in place.
-//       keys[i] = k;
-//       children[j] = addr;
-//       int i;
-//      
-//       for (i=Math.abs(count)-1; (keys[i] > k && i > 0); i--) {
-//          keys[i+1] = keys[i];
-//          children[i+1] = children[i];
-//       }
-//       //Case that k is either that smallest or second smallest
-//     if (i == 0) { 
-//         //K must be the smallest 
-//         if(k < keys[i]) {
-//             keys[i+1] = keys[i];
-//             children[i+1] = children[i];
-//             keys[i] = k;
-//             children[i] = addr;
-//             
-//         //Second smallest
-//         } else {
-//             i++;
-//         }
-//     } else {
-//       keys[i+1] = k;
-//       children[i+1] = addr;
-//     }
-       
        //Add to the count
        if(isLeaf()) {
            count--;
@@ -286,9 +219,6 @@ private long borrowFrom(BTreeNode unchanged, int key) {
        for (int i = 1; i < n; ++i){
            int key = keys[i];
            int j = i-1;
-//           if(!isLeaf()) {
-//               m = j ;
-//           }
            
            //Shift values in array
            while (j>=0 && keys[j] > key) {
@@ -350,9 +280,7 @@ private long borrowFrom(BTreeNode unchanged, int key) {
            count = callerNewCount*-1;
        } else {
            count = callerNewCount;  
-           //When splitting a non-leaf, we dont care about the smallest value
        }
-       //System.out.println("Order " + order + " tree. The callerCount is " + callerNewCount + " and newCount is " + newCount);
        //Link will be copied into the last child addr for leaves so we can keep the linked list behavior
        long link = children[order-1];
       
@@ -363,29 +291,6 @@ private long borrowFrom(BTreeNode unchanged, int key) {
        //Get the new values for the new node. Starting at the middle until the end.
        int[] keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount-1, splitNode.keys.length),order-1);
        long[] childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount-1, splitNode.children.length),order);
-       
-//       //When we have even orders, there will be overlap since the two nodes are of equal size after the split
-//       //OR When splitting a nonleaf we need to start 1 place over when copying address.
-//       if(order % 2 == 0 || !splitNode.isLeaf()) {
-//         //This will copy the array starting 1 place over to the right
-//           keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, newCount, splitNode.keys.length),order-1);
-//           childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, newCount, splitNode.children.length),order);
-//           
-//           //Since sometimes even orders have non-leaves, we need to shift yet another time over to the right
-//           if(order % 2 == 0 && !splitNode.isLeaf()) {
-//               keyArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.keys, 1 + newCount, splitNode.keys.length),order-1);
-//               childrenArr = Arrays.copyOf(Arrays.copyOfRange(splitNode.children, 1 + newCount, splitNode.children.length),order);
-//               //We'll end up with a count too large, so decrement it.
-//               newCount--;
-//           //We'll end up with a count too large, so decrement it.
-//           //Case when its an odd order but is a non-leaf
-//           }  else if (order % 2 == 1 && !splitNode.isLeaf()) {
-//               newCount--;
-//           }
-//           
-//       }
-//       
-       
        
        if(order % 2 == 0 || !splitNode.isLeaf()) {
            mid = keyArr[0];
@@ -409,22 +314,6 @@ private long borrowFrom(BTreeNode unchanged, int key) {
        
        return newnode;
    }
-   
-//   private BTreeNode share() {
-//       //Determine the count of the new node.
-//       int newCount = (int) Math.ceil((double)keys.length/2);
-//       
-//        //split   the values  (including  k)  between node  and the newnode
-//        //Update the caller //splitnode.count - newCount
-//        int callerNewCount = Math.abs(count) + 1 - newCount;
-//        if(isLeaf()) {
-//            count = callerNewCount*-1;
-//        } else {
-//            count = callerNewCount;  
-//        }
-//        
-//        //Need to make a node that contain the other half.
-//   }
    
     private void borrow(BTreeNode r, BTreeNode unchanged, int key) {
         long status = r.borrowFrom(unchanged,key);
@@ -450,37 +339,6 @@ private long borrowFrom(BTreeNode unchanged, int key) {
                 }
             }
             r.keys[i-1] = keys[0];
-            
-//            BTreeNode cupOfSugar = new BTreeNode(neighbor.count, 
-//                    Arrays.copyOfRange(neighbor.keys, minKeys(), Math.abs(neighbor.count)), 
-//                    Arrays.copyOfRange(neighbor.children, minKeys()+1, order), 
-//                    -1);
-//            
-//           BTreeNode cupOfFlour = cupOfSugar.share();
-//           
-//           //Add new keys into child
-//           keys = IntStream.concat(
-//                   Arrays.stream(Arrays.copyOfRange(neighbor.keys,minKeys(),Math.abs(neighbor.count))),
-//                   Arrays.stream(cupOfFlour.keys))
-//                   .toArray();
-//           
-//           //Add new children into child
-//           children =  LongStream.concat(
-//                   Arrays.stream( Arrays.copyOfRange(neighbor.children,minKeys()+1,Math.abs(neighbor.count)+1)),
-//                   Arrays.stream(cupOfFlour.children))
-//                   .toArray();
-//                   
-//            //Add min keys and cupOfSugar.keys
-//            neighbor.keys = IntStream.concat(
-//                    Arrays.stream( Arrays.copyOfRange(neighbor.keys,0,minKeys())),
-//                    Arrays.stream(cupOfSugar.keys))
-//                    .toArray();
-//            
-//            //add min children and cupOfSugar.children
-//            neighbor.children = LongStream.concat(
-//                    Arrays.stream( Arrays.copyOfRange(neighbor.children,0,minKeys()+1)),
-//                    Arrays.stream(cupOfSugar.children))
-//                    .toArray();
             
         //Borrow from right
         } else {
@@ -517,13 +375,54 @@ private long borrowFrom(BTreeNode unchanged, int key) {
         
         /*
          * [X] Maintain Parent
-         * [ ] Non-Leaf Delete
+         * [X] Non-Leaf Delete
          * [X] Leaf Delete 
          */
         r.writeNode();
         neighbor.writeNode();
         writeNode();
         
+    }
+    private void combine(BTreeNode child) {
+        /* 
+         * 1.) Find Neighbor
+         * 2.) Remove Parent Entry
+         * 3.) Loop insert the child into neighbor
+         * 4.) addToFree(child)
+         * */
+        
+        int i = 0;
+        //Find the index in the parent of the child
+        for(i = 0; i < Math.abs(count); i++) {
+            if (child.addr == children[i]) {
+                break;
+            }
+        }
+       BTreeNode neighbor = null;
+        
+       if(i == 0) {
+           i++;
+       }
+   
+        neighbor = new BTreeNode(children[i - 1]);
+        int j = 0;
+        if(!neighbor.isLeaf()) {
+            insertEntry(keys[i], child.keys[child.count-1]);
+            j = 1;
+        }
+        
+        removeEntry(keys[i-1]);
+        
+        for(int k = j; k < Math.abs(child.count); k++) {
+            neighbor.insertEntry(child.keys[k], child.children[k-j]);
+        }
+        
+        
+        
+        addFree(child.addr);
+        writeNode();
+        child.writeNode();
+        neighbor.writeNode();
     }
 
 }  
@@ -715,14 +614,16 @@ public BTree(String filename) {
             } else {
 //                combine child   with    a   neighbor    and remove  the key in  
  //               node    between the nodes involved    in  the combining   
-               // r.merge(child);
-                
-                //Check if r is still too small
+               r.combine(child);
+               
+                //Check if r is too small now
                 tooSmall = r.isTooSmall();
             }
+            print();
         }   
         if(tooSmall) { //this mean the root is now empty
-           // set the root to the leftmost child of the empty root and free the space used by the old root
+           // set the root to the leftmost child of the empty root and
+           // free the space used by the old root
         }
         
         return 0;
@@ -821,6 +722,26 @@ public BTree(String filename) {
         }
         return addr;
     }
+    
+    /**
+     * Puts the new address in free and puts free's old value into the new address
+     * 
+     * @param addr address of node to be added
+     * @throws IOException
+     */
+    private void addFree(long addr){
+        try {
+          //Seek to position to write to
+            f.seek(addr);
+            //Write out old value of free
+            f.writeLong(free);
+            //Set free to new value
+            free = addr;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
     public void print() { 
     //print the B+Tree to standard output 
     //print one node per line 
@@ -855,59 +776,69 @@ public BTree(String filename) {
 //        System.out.println("I got this far!");
 //        //long addr = tree.search(75);
 //       // System.out.println(addr);
-        tree.insert(110,32);
-        tree.insert(50, 24);
-        tree.insert(75, 64);
-        tree.insert(130, 48);
-        tree.insert(150, 128);
-        tree.insert(120, 420);
-        tree.insert(30, 255);
-        //Borrow from right
-//        tree.remove(75);
-//        tree.print();
-//        tree.remove(50);
-       
-        //Borrow from left
-//        tree.remove(150);
-//        tree.remove(120);
-//        tree.print();
-//        tree.remove(130);
-//        
-        tree.insert(20, 272);
-        tree.insert(100, 316);
-        tree.insert(160, 353);
-        tree.insert(5, 420);
-        tree.insert(112, 456);
-        tree.insert(123, 495);
-        tree.insert(125, 535);
-        //At this point we have M-1 keys in the root and M children
-        tree.insert(180, 582);
-        //This will split our root. If this works, we should be set.
-        tree.insert(170, 612);
-        
-        //I need 18 values
-        tree.insert(60, 655);
-        tree.insert(82, 676);
-        tree.insert(105, 707);
-        
-        tree.remove(20);
-        tree.remove(125);
-        tree.print();
-        
+//        tree.insert(110,32);
+//        tree.insert(50, 24);
+//        tree.insert(75, 64);
+//        tree.insert(130, 48);
+//        tree.insert(150, 128);
+//        tree.insert(120, 420);
+//        tree.insert(30, 255);
 //        //Borrow from right
-        //tree.remove(30);
+////        tree.remove(75);
+////        tree.print();
+////        tree.remove(50);
+//       
+//        //Borrow from left
+////        tree.remove(150);
+////        tree.remove(120);
+////        tree.print();
+////        tree.remove(130);
+////        
+//        tree.insert(20, 272);
+//        tree.insert(100, 316);
+//        tree.insert(160, 353);
+//        tree.insert(5, 420);
+//        tree.insert(112, 456);
+//        tree.insert(123, 495);
+//        tree.insert(125, 535);
+//        //At this point we have M-1 keys in the root and M children
+//        tree.insert(180, 582);
+//        //This will split our root. If this works, we should be set.
+//        tree.insert(170, 612);
+//        
+//        //I need 18 values
+//        tree.insert(60, 655);
+//        tree.insert(82, 676);
+//        tree.insert(105, 707);
+//        
+//        tree.remove(20);
+//        tree.remove(125);
+//        tree.print();
+//        
+////        //Borrow from right
+//        //tree.remove(30);
+//        
+//        //Borrow from left
+//        //tree.remove(110);
+//        
+//        tree.insert(95, 737);
+//        tree.insert(99, 777);
+//        tree.insert(109, 801);
+//        tree.insert(200, 833);
+//        tree.insert(250, 888);
         
-        //Borrow from left
-        //tree.remove(110);
+        int count = 0;
+        //Test merge
+        for(int i = 0; i < 13; i++) {
+            count += 100;
+            tree.insert(count, count/7);
+        }
+        tree.print();
+        tree.remove(200);
         
-        tree.insert(95, 737);
-        tree.insert(99, 777);
-        tree.insert(109, 801);
-        tree.insert(200, 833);
-        tree.insert(250, 888);
+        
         tree.print();
         tree.close();
-//       // System.out.println(tree.search(100));
     }
 //    
 } 
