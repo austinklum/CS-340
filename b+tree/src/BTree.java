@@ -110,7 +110,9 @@ private class BTreeNode {
     * @return -n, 0, n
     */
    private long borrowFrom(int key) {
+       Stack<BTreeNode> copy = (Stack<BTreeNode>)paths.clone();
        BTreeNode r = searchToLeaf(key);
+       paths = copy;
        //Look for key. Look at k-1 and k+1. If count > min children then return true
        int i = 0;
        for(i = 0; i < Math.abs(count); i++) {
@@ -128,7 +130,7 @@ private class BTreeNode {
        
        //We borrow from the right
        if(Math.abs(new BTreeNode(children[i]).count) > minKeys()) {
-           status = children[i + 1];
+           status = children[i];
        // When looking at the first key, there is no left neighbor
        } else if(i != 0 && Math.abs(new BTreeNode(children[i-1]).count) > minKeys()) {
            status = children[i - 1]*-1;
@@ -424,17 +426,16 @@ private class BTreeNode {
     private void borrow(BTreeNode r, int key) {
         long status = r.borrowFrom(key);
         BTreeNode neighbor = null;
+        int splitCount = (int) Math.ceil((double)(Math.abs(neighbor.count)-minKeys())/2);
         //Borrow from left
         if(status < 0) {
             neighbor = new BTreeNode(status*-1);
             
-            int splitCount = (int) Math.ceil((double)(Math.abs(neighbor.count)-minKeys())/2);
-            
-            for(int i = 0; i < splitCount; i++) {
-                insertEntry(neighbor.keys[minKeys() + i],neighbor.children[minKeys()+1]);
+            for(int i = minKeys(); i < splitCount + minKeys(); i++) {
+                insertEntry(neighbor.keys[i],neighbor.children[i]);
             }
-            for(int i = 0; i < splitCount; i++) {
-                neighbor.removeEntry(neighbor.keys[minKeys() + i]);
+            for(int i = minKeys(); i < splitCount + minKeys(); i++) {
+                neighbor.removeEntry(neighbor.keys[i]);
             }
 //            BTreeNode cupOfSugar = new BTreeNode(neighbor.count, 
 //                    Arrays.copyOfRange(neighbor.keys, minKeys(), Math.abs(neighbor.count)), 
@@ -470,17 +471,14 @@ private class BTreeNode {
         //Borrow from right
         } else {
            neighbor = new BTreeNode(status);
-           int splitCount = (int) Math.ceil((double)(Math.abs(neighbor.count)-minKeys())/2);
-           //If its a leaf take the immdediant child
+           //If its a leaf take the immediant child
            //Its its a nonleaf take the next child
            for(int i = 0; i < splitCount; i++) {
-               insertEntry(neighbor.keys[minKeys() + i],neighbor.children[minKeys()+1]);
+               insertEntry(neighbor.keys[i],neighbor.children[i]);
            }
            for(int i = 0; i < splitCount; i++) {
-               neighbor.removeEntry(neighbor.keys[minKeys() + i]);
+               neighbor.removeEntry(neighbor.keys[i]);
            }
-          // BTreeNode cupOfSugar = new BTreeNode(neighbor.count, Arrays.copyOfRange(neighbor.keys, 0, order - minKeys()), Arrays.copyOfRange(neighbor.children, 0, order-minKeys()+1), -1);
-          // int[] nkeys = Arrays.copyOfRange(neighbor.keys, order-minKeys()-1, );
         }
         //create a node that doesn't use the first min keys
         //split that node, give the smaller half back to node
@@ -693,6 +691,7 @@ public BTree(String filename) {
     
     private BTreeNode searchToLeaf(int k) {
         int i = 0;
+        paths = new Stack<>();
         BTreeNode r = new BTreeNode(root);
         paths.push(r);
         if(root == 0) {
@@ -724,7 +723,6 @@ public BTree(String filename) {
        If the key is found return the address of the row with the key 
        otherwise return 0  
     */ 
-        paths = new Stack<>();
         BTreeNode r = searchToLeaf(k);
         if(root == 0) {
             return 0;
@@ -747,7 +745,7 @@ public BTree(String filename) {
        return a list of row addresses for all keys in the range low to high inclusive 
        return an empty list when no keys are in the range 
     */ 
-        paths = new Stack<>();
+        
         LinkedList<Long> list = new LinkedList<>();
         BTreeNode r = searchToLeaf(low);
         int i = 0;
@@ -823,10 +821,11 @@ public BTree(String filename) {
         tree.insert(75, 64);
         tree.insert(130, 48);
         tree.insert(150, 128);
+        tree.insert(120, 420);
         tree.insert(30, 255);
-        tree.remove(150);
+        tree.remove(75);
         tree.print();
-        tree.remove(130);
+        tree.remove(50);
 //       
 //        tree.insert(20, 272);
 //        tree.insert(100, 316);
