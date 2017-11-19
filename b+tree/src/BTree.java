@@ -435,14 +435,14 @@ private long borrowFrom(BTreeNode unchanged, int key) {
             System.out.println("Borrowing from the left at " + status*-1);
             neighbor = new BTreeNode(status*-1);
             splitCount = (int) Math.ceil((double)(Math.abs(neighbor.count)-minKeys())/2);
-            for(int i = minKeys(); i < splitCount + minKeys(); i++) {
+            int i = 0;
+            int count = Math.abs(neighbor.count);
+            for(i = count - 1; i > count - splitCount - 1; i--) {
                 insertEntry(neighbor.keys[i],neighbor.children[i]);
             }
-            for(int i = minKeys(); i < splitCount + minKeys(); i++) {
+            for(i = count - 1; i > count - splitCount - 1; i--) {
                 neighbor.removeEntry(neighbor.keys[i]);
             }
-            
-            int i = 0;
             for(i = 0; i < Math.abs(r.count); i++) {
                 if(unchanged.keys[0] < r.keys[i]) {
                     System.out.println("Welp, " + r.keys[i]);
@@ -872,7 +872,7 @@ public BTree(String filename) {
 //        tree.remove(120);
 //        tree.print();
 //        tree.remove(130);
-        
+//        
         tree.insert(20, 272);
         tree.insert(100, 316);
         tree.insert(160, 353);
@@ -894,16 +894,17 @@ public BTree(String filename) {
         tree.remove(125);
         tree.print();
         
-        //Borrow from right
-        //tree.remove(50);
+//        //Borrow from right
+        //tree.remove(30);
         
         //Borrow from left
-        tree.remove(110);
+        //tree.remove(110);
         
-//        tree.insert(95, 737);
-//        tree.insert(99, 777);
-//        tree.insert(109, 801);
-//        tree.remove(20);
+        tree.insert(95, 737);
+        tree.insert(99, 777);
+        tree.insert(109, 801);
+        tree.insert(200, 833);
+        tree.insert(250, 888);
         tree.print();
         tree.close();
 //       // System.out.println(tree.search(100));
