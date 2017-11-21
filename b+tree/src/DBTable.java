@@ -178,9 +178,10 @@ public class DBTable {
     } 
     private LinkedList<String> getFields(LinkedList<String> list,long dbAddr) {
         Row r = new Row(dbAddr);
-        
+        String str = Integer.toString(r.keyField);
+        list.add(str);
         for(int i = 0; i < numOtherFields; i++) {
-            String str = "";
+            str = "";
             for (int j = 0; j < otherFieldLengths[i]; j++) {
                 if(r.otherFields[i][j] == '\0') {
                     break;
