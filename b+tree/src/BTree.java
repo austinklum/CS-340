@@ -96,7 +96,7 @@ private class BTreeNode {
    
    private boolean isTooSmall() {
        if(this.addr == root) {
-           return count == 1;
+           return count < 1;
        }
        return Math.abs(count) < minKeys();
    }
@@ -465,7 +465,15 @@ private long borrowFrom(BTreeNode unchanged, int key) {
        BTreeNode neighbor = null;
         
        if(addr == root && count == 1) {
-           child.insertEntry(keys[0], new BTreeNode(children[1]).children[0]);
+           BTreeNode merge = new BTreeNode(children[i]);
+           long childAddr = 0;
+           if(i == 0) {
+               childAddr = merge.children[1];
+           } else {
+               childAddr = merge.children[0];
+               
+           }
+           child.insertEntry(keys[0], childAddr);
        }
        
        //Handle borrowing right
@@ -479,8 +487,11 @@ private long borrowFrom(BTreeNode unchanged, int key) {
         for(int j = 0; j < Math.abs(child.count); j++) {
             neighbor.insertEntry(child.keys[j], child.children[j]);
         }
-        neighbor.children[order-1] = child.children[order-1];
-        
+        if(!child.isLeaf()) {
+            neighbor.children[order-1] = child.children[child.count];
+        } else {
+            neighbor.children[order-1] = child.children[order-1];
+        }
         
         addFree(child.addr);
         writeNode();
