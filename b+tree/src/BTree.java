@@ -16,7 +16,7 @@ int blockSize;
 long root; 
 long free;
 Stack<BTreeNode> paths;
-int stopper = 0;
+static int stopper = 0;
 int mid;
 //add instance variables as needed. 
 private class BTreeNode { 
@@ -131,7 +131,10 @@ private long borrowFrom(BTreeNode unchanged, int key) {
         *  n : Right Neighbor
         */
        long status = 0;
-       
+       if(stopper == 5) {
+       BTreeNode right = new BTreeNode(children[i + 1]);
+       BTreeNode left = new BTreeNode(children[i-1]);
+       }
        //We borrow from the right
        if(i != Math.abs(count) && Math.abs(new BTreeNode(children[i + 1]).count) > minKeys()) {
            status = children[i + 1];
@@ -244,10 +247,13 @@ private long borrowFrom(BTreeNode unchanged, int key) {
        }
    }
    
-   private void removeEntry(int key) {
-       for(int j = findKeyIndex(key); j < Math.abs(count)-1; j++) {
+   private long removeEntry(int key) {
+       int k = !isLeaf() ? 1 : 0;
+       int j = findKeyIndex(key) ;//+ k;
+       long retVal = children[j];
+       for(j = findKeyIndex(key); j < order-2; j++) {
            keys[j] = keys[j+1];
-           children[j] = children[j+1];
+           children[j+k] = children[j+1+k];
        }
        
        if(isLeaf()) {
@@ -255,6 +261,7 @@ private long borrowFrom(BTreeNode unchanged, int key) {
        } else {
            count--;
        }
+       return retVal;
    }
    
    /**
@@ -331,9 +338,7 @@ private long borrowFrom(BTreeNode unchanged, int key) {
             int count = Math.abs(neighbor.count);
             if(!isLeaf()) {
                 splitCount = 1;
-                int parentCount = Math.abs(r.count);
                 //I want my parents keys and my neighbors children
-                int j = count;
 
 //                for(i = parentCount; i > splitCount-1; i--) {
 //                   // insertEntry(r.keys[i],neighbor.children[j]);
@@ -350,7 +355,6 @@ private long borrowFrom(BTreeNode unchanged, int key) {
                 for(int k = Math.abs(unchanged.count); k >= 0; k--) {
                     keys[k+1] = keys[k];
                     children[k+1] = children[k];
-                    j--;
                 }
                 keys[0] = r.keys[r.count-1];
                 children[0] = neighbor.children[neighbor.count];
@@ -361,6 +365,21 @@ private long borrowFrom(BTreeNode unchanged, int key) {
                     neighbor.removeEntry(neighbor.keys[i]);
                 }
             } else {
+                if(!isLeaf()) {
+                    System.out.println("im in!");
+                    //Shift everthing over 1
+                    for(int k = Math.abs(unchanged.count); k >= 0; k--) {
+                        keys[k+1] = keys[k];
+                        children[k+1] = children[k];
+                    }
+                    keys[this.count-1] = r.keys[0];
+                    children[this.count] = neighbor.children[0];
+                    this.count++;
+                   r.keys[0] = neighbor.keys[0];
+                    //Remove the entry from my neighbor
+                   neighbor.removeEntry(neighbor.keys[0]);
+                }
+                
                 for(i = count - 1; i > count - splitCount - 1; i--) {
                     insertEntry(neighbor.keys[i],neighbor.children[i]);
                 }
@@ -398,16 +417,17 @@ private long borrowFrom(BTreeNode unchanged, int key) {
                neighbor.removeEntry(neighbor.keys[i]);
            }
            
-           //Maintain Parent
-           int i = 0;
-           for(i = 0; i < Math.abs(r.count); i++) {
-               if(neighbor.keys[0] < r.keys[i]) {
-                   System.out.println("Welp, " + r.keys[i]);
-                   break;
+           if(isLeaf()) {
+               //Maintain Parent
+               int i = 0;
+               for(i = 0; i < Math.abs(r.count); i++) {
+                   if(neighbor.keys[0] < r.keys[i]) {
+                       System.out.println("Welp, " + r.keys[i]);
+                       break;
+                   }
                }
+               r.keys[i-1] = neighbor.keys[0];
            }
-           r.keys[i-1] = neighbor.keys[0];
-           
         }
         //create a node that doesn't use the first min keys
         //split that node, give the smaller half back to node
@@ -450,17 +470,16 @@ private long borrowFrom(BTreeNode unchanged, int key) {
        
        //Handle borrowing right
        if(i == 0) {
-           i=2;
+           i = 2;
        }
-       
+      // for(int j = 0;)
         neighbor = new BTreeNode(children[i - 1]);
-
         removeEntry(keys[i-1]);
         
         for(int j = 0; j < Math.abs(child.count); j++) {
             neighbor.insertEntry(child.keys[j], child.children[j]);
         }
-        
+        neighbor.children[order-1] = child.children[order-1];
         
         
         addFree(child.addr);
@@ -640,24 +659,30 @@ public BTree(String filename) {
 //        if  k   is  in  node   
         //key will always be in the node at this point, If it wasn't I would've return earlier.
 //        remove  it  
-        r.removeEntry(key);
+        System.out.println("Removing entry!");
+       // print();
+       long retVal = r.removeEntry(key);
         r.writeNode();
+       // print();
 //        if  the node    has too few keys    set tooSmall    =   true   
         tooSmall = r.isTooSmall();
 //        while   (!path.empty()  &&  tooSmall)   {   
         while (!paths.empty() && tooSmall) {
             BTreeNode child = r; //the   node    that    is  too small   
+            unchanged = r.copy();
             r = paths.pop(); //the   parent  of  child 
-        
+
 //            check   the neighbors   of  child; the immediate left and right
             if(r.canBorrow(unchanged,key)) {
+                  System.out.println("Borrowing with " + key);
 //                shift    values  between the children    and adjust  the key 
 //                in  node    that    is  between the nodes   involved    in  the borrowing  
                 child.borrow(r,unchanged,key);
                 tooSmall = false;
             } else {
 //                combine child   with    a   neighbor    and remove  the key in  
- //               node    between the nodes involved    in  the combining   
+ //               node    between the nodes involved    in  the combining 
+                System.out.println("combining with " + key);
                r.combine(child);
                
                 //Check if r is too small now
@@ -668,10 +693,10 @@ public BTree(String filename) {
         if(tooSmall) { //this mean the root is now empty
            // set the root to the leftmost child of the empty root and
            // free the space used by the old root
-            
+            root = r.children[0];
         }
         
-        return 0;
+        return retVal;
     } 
     
     private BTreeNode searchToLeaf(int k) {
@@ -881,74 +906,87 @@ public BTree(String filename) {
 //        tree.print();
 //        tree.remove(200);
         
-        //BTree tree = new BTree("test.txt", 60);
-        tree.insert(24, 1);
-        System.out.println("Inserted 1");
-        tree.print();
-        tree.insert(12, 2);
-        System.out.println("Inserted 2");
-        tree.print();
-        tree.insert(45, 3);
-        System.out.println("Inserted 3");
-        tree.print();
-        tree.insert(10, 4);
-        System.out.println("Inserted 4");
-        tree.print();
-        tree.insert(16, 5);
-        System.out.println("Inserted 5");
-        tree.print();
-        tree.insert(42, 6);
-        System.out.println("Inserted 6");
-        tree.print();
-        tree.insert(13, 7);
-        System.out.println("Inserted 7");
-        tree.print();
-        tree.insert(36, 8);
-        System.out.println("Inserted 8");
-        tree.print();
-        tree.insert(70, 9);
-        System.out.println("Inserted 9");
-        tree.print();
-        tree.insert(55, 10);
-        System.out.println("Inserted 10");
-        tree.print();
-        tree.insert(38, 11);
-        System.out.println("Inserted 11");
-        tree.print();
-        tree.insert(40, 12);
-        System.out.println("Inserted 12");
-        tree.print();
-        tree.insert(39, 13);
-        System.out.println("Inserted 13");
-        tree.print();
-        tree.insert(64, 14);
-        System.out.println("Inserted 14");
-        tree.print();
-        tree.insert(57, 15);
-        System.out.println("Inserted 15");
-        tree.print();
-        tree.insert(56, 16);
-        System.out.println("Inserted 16");
-        tree.print();
-        tree.insert(11, 17);
-        System.out.println("Inserted 17");
-        tree.print();
-        tree.insert(26, 18);
-        System.out.println("Inserted 18");
-        tree.print();
-        tree.insert(32, 19);
-        System.out.println("Inserted 19");
-        tree.print();
-        tree.insert(15, 20);
-        System.out.println("Inserted 20");
-        tree.print();
-        tree.insert(34, 21);
-        System.out.println("Inserted 21");
-        tree.print();
-        tree.remove(70); //Test borrow across leaves
-        tree.remove(64); 
-        tree.print();
-        tree.remove(57); //Till here ^
+//        //BTree tree = new BTree("test.txt", 60);
+//        tree.insert(24, 1);
+//        System.out.println("Inserted 1");
+//        tree.print();
+//        tree.insert(12, 2);
+//        System.out.println("Inserted 2");
+//        tree.print();
+//        tree.insert(45, 3);
+//        System.out.println("Inserted 3");
+//        tree.print();
+//        tree.insert(10, 4);
+//        System.out.println("Inserted 4");
+//        tree.print();
+//        tree.insert(16, 5);
+//        System.out.println("Inserted 5");
+//        tree.print();
+//        tree.insert(42, 6);
+//        System.out.println("Inserted 6");
+//        tree.print();
+//        tree.insert(13, 7);
+//        System.out.println("Inserted 7");
+//        tree.print();
+//        tree.insert(36, 8);
+//        System.out.println("Inserted 8");
+//        tree.print();
+//        tree.insert(70, 9);
+//        System.out.println("Inserted 9");
+//        tree.print();
+//        tree.insert(55, 10);
+//        System.out.println("Inserted 10");
+//        tree.print();
+//        tree.insert(38, 11);
+//        System.out.println("Inserted 11");
+//        tree.print();
+//        tree.insert(40, 12);
+//        System.out.println("Inserted 12");
+//        tree.print();
+//        tree.insert(39, 13);
+//        System.out.println("Inserted 13");
+//        tree.print();
+//        tree.insert(64, 14);
+//        System.out.println("Inserted 14");
+//        tree.print();
+//        tree.insert(57, 15);
+//        System.out.println("Inserted 15");
+//        tree.print();
+//        tree.insert(56, 16);
+//        System.out.println("Inserted 16");
+//        tree.print();
+//        tree.insert(11, 17);
+//        System.out.println("Inserted 17");
+//        tree.print();
+//        tree.insert(26, 18);
+//        System.out.println("Inserted 18");
+//        tree.print();
+//        tree.insert(32, 19);
+//        System.out.println("Inserted 19");
+//        tree.print();
+//        tree.insert(15, 20);
+//        System.out.println("Inserted 20");
+//        tree.print();
+//        tree.insert(34, 21);
+//        System.out.println("Inserted 21");
+//        tree.print();
+//        tree.insert(80, 341);
+//        tree.insert(90, 356);
+//        tree.insert(100,404);
+//        tree.print();
+//        tree.remove(10);
+//        tree.remove(11);
+//        tree.print();
+//        tree.remove(12);
+//        tree.remove(13);
+//        tree.remove(15);
+//        tree.print();
+//        tree.remove(16);
+//        tree.remove(24);
+//        tree.remove(70); //Test borrow across leaves
+//        tree.remove(64); 
+//        tree.print();
+//        tree.remove(57); //Till here ^
 //        tree.remove(10);
 //        tree.remove(11);
 //        tree.remove(12);
@@ -960,7 +998,34 @@ public BTree(String filename) {
 //        tree.remove(26);
 //        tree.print();
 //        tree.remove(32);
-        
+        int count = 0;
+        for(int i = 0; i < 18; i++) {
+          count += 100;
+          tree.insert(count, count/7);
+        }
+        tree.print();
+        System.out.println(tree.remove(1500));
+        System.out.println("Removing 1500");
+        tree.print();
+        tree.remove(1600);
+        System.out.println("Removing 1600");
+        tree.print();
+        tree.remove(1700);
+        System.out.println("Removing 1700");
+        tree.print();
+        System.out.println("Removing 1200");
+        tree.remove(1200);
+        tree.print();
+        System.out.println("Its all good up to here");
+        stopper = 5;
+        System.out.println("Removing 900");
+        tree.remove(900);
+        tree.print();
+        System.out.println("Removing 700");
+        tree.remove(700);
+        tree.print();
+        System.out.println("Removing 1100\n This will break things are you sure? (Y/N) Y" );
+        tree.remove(1100);
         tree.print();
         tree.close();
     }
