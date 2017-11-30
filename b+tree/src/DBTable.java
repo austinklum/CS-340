@@ -166,13 +166,11 @@ public class DBTable {
        
        If the row is deleted the key must be deleted from the B+Tree
     */ 
-        if(tree.search(key) != 0) {
+        if(tree.search(key) == 0) {
             return false;
         }
         
-       long retVal = tree.search(key);
-        tree.remove(key);
-        addFree(retVal);
+        addFree(tree.remove(key));
         
         return true;
     } 
