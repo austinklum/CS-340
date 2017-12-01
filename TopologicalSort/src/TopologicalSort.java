@@ -104,25 +104,18 @@ public class TopologicalSort {
         String str = "";
         while((n = find(0)) != null) {
             n.indegree--;
+            numVertices--;
             str += n.name + " ";
             System.out.println(str);
             EdgeNode e = n.edges;
             while(e != null) {
-                System.out.println("Looking at the edges");
                 e.vertex2.indegree--;
                 e = e.nextE;
             }
         }
-        n = vertices;
-        System.out.println("Im about to look if there's any left overs. Wish me luck!");
-        while(n != null) {
-            System.out.println(n);
-            if (n.indegree > 0) {
-                return "No Topological Order";
-            }
-            n = n.nextV;
+        if (numVertices > 0) {
+            return "No Topo Order";
         }
-        
         return str;
     } 
     public static void main(String args[]) throws IOException{ 
@@ -130,7 +123,6 @@ public class TopologicalSort {
         Scanner scan = new Scanner(new File(args[0]));
         TopologicalSort topo = new TopologicalSort();
         for (String str : scan.nextLine().split(" ")) {
-            System.out.println(str);
             topo.addVertex(str);
         }
         
@@ -138,7 +130,6 @@ public class TopologicalSort {
             topo.addEdge(scan.next(), scan.next());
         }
         scan.close();
-        System.out.println("I added everything! Lets sort it!");
         System.out.println(topo.topoSort());
         
     } 

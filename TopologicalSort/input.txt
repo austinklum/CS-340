@@ -7,4 +7,4 @@ D B
 D E
 B E 
 E G
-G F 
+G F
